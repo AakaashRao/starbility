@@ -9,3 +9,4 @@ packrat/lib*/
 .Rprofile
 .DS_Store
 *.Rproj
+doc

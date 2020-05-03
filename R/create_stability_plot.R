@@ -1,4 +1,4 @@
-create_grid = function(perm, ...) {
+create_grid = function(perm, lhs, rhs, ...) {
   l = list(...)
   if (is.null(l$base)) base = c()
   if (is.null(l$perm_fe)) perm_fe = c()
@@ -9,6 +9,11 @@ create_grid = function(perm, ...) {
     for(i in 1:length(l)) {
       assign(x = names(l)[i], value = l[[i]])
     }
+  }
+  if (is.null(l$iv)) {
+    iv='0'
+  } else {
+    iv=paste0('(', rhs, '~', l$iv, ')')
   }
   if (is.null(l$include_no_fe_specs) | length(nonperm_fe)==0) include_no_fe_specs=T
 
@@ -43,24 +48,34 @@ create_grid = function(perm, ...) {
   grid = do.call("rbind", replicate(copies, grid, simplify = FALSE))
   grid$fe = fes
   grid$expr2 = ifelse((grid$expr2=='' & grid$fe==''), '0', grid$expr2)
-  grid$expr2 = ifelse((grid$expr2!='' & grid$fe!=''), paste0(grid$expr2, '+'), grid$expr2)
-
-  grid = grid %>% dplyr::mutate(expr = paste(expr, '|', expr2, fe, '|', '0', '|', cluster, sep=''))
+  grid$expr2 = ifelse((grid$expr2!='0' & grid$fe!=''), paste0(grid$expr2, '+'), grid$expr2)
+  grid = grid %>% dplyr::mutate(expr = paste(expr, '|', expr2, fe, '|', iv, '|', cluster, sep=''))
   grid = grid[,c(names(base_perm), names(perm_fe), 'fe', 'expr')]
   grid$fe[grid$fe==''] = '0'
   grid$fe = factor(grid$fe, levels=unique(grid$fe))
+
+  # If IV is not zero, the RHS should appear in the second part of the formula:
+  if (iv=='0') {
+    indices_to_append = which(substring(grid$expr, 1, 1)!='|')
+    grid$expr[indices_to_append] = paste0('+', grid$expr[indices_to_append])
+    grid$expr = paste(lhs, '~', rhs, grid$expr, sep='')
+  } else { # Otherwise it should appear in the third part of the formula.
+    # However, if the second part of the formula is blank, we need to
+    # add a 0.
+    indices_to_append = which(substring(grid$expr, 1, 1)=='|')
+    grid$expr[indices_to_append] = paste0('0', grid$expr[indices_to_append])
+    grid$expr = paste(lhs, '~', grid$expr, sep='')
+  }
   return(grid)
 }
 
 estimate_single_model = function(data_, spec_, lhs_, rhs_) {
-  if (substr(spec_, 1, 1) != '|') {
-    spec_ = paste0('+',spec_)
-  }
-  model = broom::tidy(lfe::felm(as.formula(str_interp('${lhs_}~${rhs_}${spec_}')),
+  model = broom::tidy(lfe::felm(as.formula(spec_),
                                 data=data_, weights=data_$weight))
-  coef = model[model$term==rhs_, 'estimate'] %>% as.numeric()
-  se   = model[model$term==rhs_, 'std.error'] %>% as.numeric()
-  p    = model[model$term==rhs_, 'p.value'] %>% as.numeric()
+  row = which(model$term==rhs_ | model$term==paste0('`',rhs_,'(fit)`'))
+  coef = model[row, 'estimate'] %>% as.numeric()
+  se   = model[row, 'std.error'] %>% as.numeric()
+  p    = model[row, 'p.value'] %>% as.numeric()
   return(c(coef, se, p))
 }
 
@@ -72,8 +87,7 @@ create_model_estimates = function(data., lhs., rhs., perm., ...) {
     data.$weight = data.[[l$weights]]
   }
 
-  grid = create_grid(perm=perm.,
-                     ...) %>%
+  grid = create_grid(perm=perm., lhs=lhs., rhs=rhs., ...) %>%
       mutate(model = purrr::map(expr, function(x) estimate_single_model(data., x, lhs., rhs.)),
              coef = purrr::map_dbl(model, function(x) x[1]),
              se = purrr::map_dbl(model, function(x) x[2]),
@@ -252,8 +266,8 @@ combine_plots = function(coef, control, rel_height=0.5, ...) {
 #'
 #' \code{create_stability_plot} is used to produce a plot showing the stability of the OLS estimate
 #' of the explanatory variable \code{rhs} on the outcome variable \code{lhs} under combinations
-#' of a given set of controls. Fixed effects, clustering, and weights are supported. IV is not currently
-#' supported.
+#' of a given set of controls. Fixed effects, clustering, weights, and instrumental
+#' variables are supported.
 #'
 #' Each row of the bottom panel of the plot corresponds to a single variable set.
 #' A variable set can contain one or more individual variables.
@@ -263,6 +277,8 @@ combine_plots = function(coef, control, rel_height=0.5, ...) {
 #' @param lhs A string indicating the name of the outcome variable in \code{data}.
 #' @param rhs A string indicating the name of the explanatory variable for which coefficient estimates
 #' will be plotted.
+#' @param iv A string indicating the variables which should be used to instrument \code{rhs}.
+#' If left unspecified, OLS coefficients are plotted.
 #' @param perm A named dictionary in which values correspond to the sets of variables
 #' that should be iterated upon to produce the stability plot and names correspond to the names
 #' of these sets of variables that should be displayed in the plot.

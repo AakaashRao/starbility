@@ -18,6 +18,9 @@ will be plotted.}
 that should be iterated upon to produce the stability plot and names correspond to the names
 of these sets of variables that should be displayed in the plot.}
 
+\item{iv}{A string indicating the variables which should be used to instrument \code{rhs}.
+If left unspecified, OLS coefficients are plotted.}
+
 \item{base}{A named dictionary in which values correspond to the sets of variables that should
 always be included in the model in all specifications and names correspond to the names
 of these sets of variables that should be displayed in the plot.}
@@ -92,8 +95,8 @@ A ggplot2 object.
 \description{
 \code{create_stability_plot} is used to produce a plot showing the stability of the OLS estimate
 of the explanatory variable \code{rhs} on the outcome variable \code{lhs} under combinations
-of a given set of controls. Fixed effects, clustering, and weights are supported. IV is not currently
-supported.
+of a given set of controls. Fixed effects, clustering, weights, and instrumental
+variables are supported.
 }
 \details{
 Each row of the bottom panel of the plot corresponds to a single variable set.
