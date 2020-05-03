@@ -202,6 +202,7 @@ nonperm_fe_controls = c(
 create_stability_plot(data=diamonds, 
                       lhs='price', 
                       rhs='carat', 
+                      error_geom='ribbon',
                       perm=perm_controls, 
                       perm_fe=perm_fe_controls, 
                       nonperm_fe = nonperm_fe_controls, 
