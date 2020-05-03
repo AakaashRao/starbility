@@ -1,6 +1,7 @@
 .Rproj.user
 inst/doc
-doc
+doc/*.R
+doc/*.Rmd
 Meta
 packrat/lib*/
 .Rbuildignore
