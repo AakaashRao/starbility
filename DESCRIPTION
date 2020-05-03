@@ -1,0 +1,25 @@
+Package: starbility
+Title: Create Coefficient Stability Plot Under Combinations of Controls
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Aakaash",
+           family = "Rao",
+           role = c("aut", "cre"),
+           email = "arao@g.harvard.edu")
+Description: starbility is used to produce a plot showing the stability of the OLS estimate of an explanatory variable on an outcome variable under combinations of a given set of controls. Plots contain two panels: the top panel shows coefficient point estimates and confidence intervals for each specification, and the bottom panel is a graphical display of the control variables included in the specification.
+License: `use_mit_license()`
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.0
+Imports:
+	tidyverse, 
+	broom, 
+	ggplot2, 
+	lfe, 
+	ggforce, 
+	cowplot
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

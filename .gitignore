@@ -1,0 +1,10 @@
+.Rproj.user
+inst/doc
+doc
+Meta
+packrat/lib*/
+.Rbuildignore
+.Rhistory
+.Rprofile
+.DS_Store
+*.Rproj
