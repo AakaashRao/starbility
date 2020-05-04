@@ -387,7 +387,7 @@ draw_panels = function(coef_grid., control_grid., ...) {
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
           axis.text.y = element_text(size=12),
-          axis.title.x = element_blank(),
+          axis.title = element_blank(),
           panel.grid.major.x = element_blank(),
           panel.grid.minor.x = element_blank(),
           panel.border = element_blank())

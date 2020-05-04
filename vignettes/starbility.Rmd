@@ -51,7 +51,7 @@ Let's begin with a simple plot, varying just two controls:
 ```{r stability-1, fig.width = 7.2, fig.height = 4}
 perm_controls = c(
   'Depth' = 'depth',
-  'Width of top relative to widest point' = 'table'
+  'Table width' = 'table'
 )
 
 stability_plot(data = diamonds, 
@@ -69,7 +69,7 @@ Now, let's also control for the dimension of the diamond: `x`, `y`, and `z`. We 
 ```{r controls-1, fig.width = 7.2, fig.height = 4}
 perm_controls = c(
   'Depth' = 'depth',
-  'Width of top relative to widest point' = 'table',
+  'Table width' = 'table',
   'Diamond dimensions' = 'x + y + z'
 )
 
@@ -87,7 +87,7 @@ base_controls = c(
 )
 perm_controls = c(
   'Depth' = 'depth',
-  'Width of top relative to widest point' = 'table'
+  'Table width' = 'table'
 )
 
 stability_plot(data = diamonds, 
@@ -241,7 +241,7 @@ perm_controls = c(
   'Dimension y' = 'y',
   'Dimension z' = 'z',
   'Depth' = 'depth',
-  'Width of top relative to widest point' = 'table'
+  'Table width' = 'table'
 )
 perm_fe_controls = c(
   'Cut FE' = 'cut',
@@ -373,7 +373,7 @@ replacement_coef_panel = plots[[1]] +
   scale_y_reverse() +
   theme(panel.grid.minor = element_blank()) +
   geom_vline(xintercept = 41, linetype = 'dashed', alpha = 0.4) +
-  annotate(geom = 'label', x = 49, y = 6000, label = 'What a great\nspecification!', alpha = 0.75)
+  annotate(geom = 'label', x = 52, y = 30000, label = 'What a great\nspecification!', alpha = 0.75)
 
 combine_plots(replacement_coef_panel, 
               plots[[2]], 
@@ -385,8 +385,9 @@ combine_plots(replacement_coef_panel,
 Comments, criticism, suggestions, pull requests, etc. are very much appreciated. Email: <arao@g.harvard.edu>. Thanks to David Yanagizawa-Drott for suggesting the structure of the plot and to Ross Mattheis and Eric Karsten for very helpful feedback.
 
 If you're ready to move on to more advanced features, the [advanced vignette](https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility-advanced.html) discusses the following topics in greater depth:
-1. The \code{starbility} pipeline
-2. Estimate models that are not automatically supported in \code{starbility}. (Currently, the only function automatically supported is `felm`)
+
+1. The `starbility` pipeline
+2. Estimate models that are not automatically supported in `starbility`. (Currently, the only function automatically supported is `felm`)
 3. Manual `ggplot2` plotting
 
 Thanks for reading!
