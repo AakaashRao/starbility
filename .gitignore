@@ -1,7 +1,5 @@
 .Rproj.user
 inst/doc
-doc/*.R
-doc/*.Rmd
 Meta
 packrat/lib*/
 .Rbuildignore
@@ -9,4 +7,3 @@ packrat/lib*/
 .Rprofile
 .DS_Store
 *.Rproj
-doc
