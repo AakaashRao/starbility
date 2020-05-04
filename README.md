@@ -4,7 +4,7 @@ A common exercise in applied microeconomics is to assess the stability of a coef
 
 ![alt text](https://github.com/AakaashRao/starbility/blob/master/doc/example.png)
 
-`starbility` builds upon `lfe` and `ggplot2`, allowing for fast estimation of models with many groups of fixed effects and for flexible plotting. IV estimation, sample weights, clustered standard errors, and custom models are supported. See the [main vignette](https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility.html) for an introduction to `starbility`, and see the [advanced vignette](link) for a discussion of custom models, manual plotting, etc.
+`starbility` builds upon `lfe` and `ggplot2`, allowing for fast estimation of models with many groups of fixed effects and for flexible plotting. IV estimation, sample weights, clustered standard errors, and custom models are supported. See the [main vignette](https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility.html) for an introduction to `starbility`, and see the [advanced vignette](https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility-advanced.html) for a discussion of custom models, manual plotting, etc.
 
 ## Quick setup
 ```
