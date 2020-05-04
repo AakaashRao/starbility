@@ -95,7 +95,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 
-<p>A common exercise in applied microeconomics is assessing the stability of a coefficient under different choices of controls. This can be a tedious task for the econometrician, particularly with a large set of controls, but more importantly, it’s difficult to concisely convey this information to the reader. Regression tables are useful for displaying a limited number of models, but they’re less useful for displaying how coefficients evolve under dozens or even hundreds sets of controls. <code>starbility</code> provides a simple interface to create a “coefficient stability plot”, allowing both the econometrician and the reader to assess coefficient stability under different combinations of controls. <code>starbility</code> builds upon <code>lfe</code> and <code>ggplot2</code>, allowing for fast estimation of models with many groups of fixed effects and flexible plotting.</p>
+<p>A common exercise in applied microeconomics is assessing the stability of a coefficient under different choices of controls. This can be a tedious task for the econometrician, particularly with a large set of controls, but more importantly, it’s difficult to concisely convey this information to the reader. Regression tables are useful for displaying a limited number of models, but they’re less useful for displaying how coefficients evolve under dozens or even hundreds of sets of controls. <code>starbility</code> provides a simple interface to create a “coefficient stability plot”, allowing both the econometrician and the reader to assess coefficient stability under different combinations of controls. <code>starbility</code> builds upon <code>lfe</code> and <code>ggplot2</code>, allowing for fast estimation of models with many groups of fixed effects and flexible plotting.</p>
 <div id="setup" class="section level2">
 <h2>Setup</h2>
 <p>We will use the <code>diamonds</code> dataset included in <code>ggplot2</code> as an example.</p>
@@ -451,6 +451,7 @@ replacement_coef_panel =<span class="st"> </span>plots[[<span class="dv">1</span
 <div id="final-notes" class="section level2">
 <h2>Final notes</h2>
 <p>Comments, criticism, suggestions, pull requests, etc. are very much appreciated. Email: <a href="mailto:arao@g.harvard.edu">arao@g.harvard.edu</a>. Thanks to David Yanagizawa-Drott for suggesting the structure of the plot and to Ross Mattheis and Eric Karsten for very helpful feedback.</p>
+<p>If you’re ready to move on to more advanced features, the <a href="https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility-advanced.html">advanced vignette</a> discusses the following topics in greater depth: 1. The  pipeline 2. Estimate models that are not automatically supported in . (Currently, the only function automatically supported is <code>felm</code>) 3. Manual <code>ggplot2</code> plotting</p>
 <p>Thanks for reading!</p>
 </div>
 

@@ -95,8 +95,13 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 
-<p>This vignette is designed for users who would like greater control over the default functions in . If you have not yet done so, please first review the <a href="https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility.html">main vignette</a>.</p>
-<p>This vignette will cover three topics: 1. An overview of the  pipeline. 2. Using functions to estimate coefficients that are not automatically supported in . (Currently, the only function automatically supported is <code>felm</code>.) 3. Manual <code>ggplot2</code> plotting.</p>
+<p>This vignette is designed for users who would like greater control over the default functions in <code>starbility</code>. If you have not yet done so, please first review the <a href="https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility.html">main vignette</a>.</p>
+<p>This vignette will cover three topics:</p>
+<ol style="list-style-type: decimal">
+<li>An overview of the <code>starbility</code> pipeline</li>
+<li>Estimating models that are not automatically supported in <code>starbility</code>. (Currently, the only function automatically supported is <code>felm</code>)</li>
+<li>Manual <code>ggplot2</code> plotting</li>
+</ol>
 <p>As in the main vignette, we will use the <code>diamonds</code> dataset included in `<code>ggplot2</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidyverse)
 <span class="kw">library</span>(starbility)
@@ -105,9 +110,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <span class="kw">set.seed</span>(<span class="dv">43</span>)
 indices =<span class="st"> </span><span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(diamonds), <span class="dt">replace=</span>F, <span class="dt">size=</span><span class="kw">round</span>(<span class="kw">nrow</span>(diamonds)<span class="op">/</span><span class="dv">20</span>))
 diamonds =<span class="st"> </span>diamonds[indices,]</code></pre></div>
-<div id="overview-of-pipeline" class="section level2">
-<h2>Overview of  pipeline</h2>
-<p> proceeds in six discrete steps, corresponding to six discrete functions: <code>create_grid</code>, <code>create_felm_formulas</code>, <code>create_model_estimates</code>, <code>create_plot_dfs</code>, <code>draw_panels</code>, and <code>combine_plots</code>. <code>stability_plot</code> wraps all of these steps for convenience, but we can also access each function individually. Alternatively, we can use the <code>run_to</code> argument in <code>stability_plot</code> to end execution before a given step and the <code>run_from</code> argument to begin execution at a given step. The typical use case is to skip a step and implement it ourselves if we desire more flexibility or an option not yet automatically implemented.</p>
+<div id="overview-of-starbility-pipeline" class="section level2">
+<h2>Overview of <code>starbility</code> pipeline</h2>
+<p><code>starbility</code> proceeds in six discrete steps, corresponding to six discrete functions: <code>create_grid</code>, <code>create_felm_formulas</code>, <code>create_model_estimates</code>, <code>create_plot_dfs</code>, <code>draw_panels</code>, and <code>combine_plots</code>. <code>stability_plot</code> wraps all of these steps for convenience, but we can also access each function individually. Alternatively, we can use the <code>run_to</code> argument in <code>stability_plot</code> to end execution before a given step and the <code>run_from</code> argument to begin execution at a given step. The typical use case is to skip a step and implement it ourselves if we desire more flexibility or an option not yet automatically implemented.</p>
 <div id="step-1-control-grid" class="section level3">
 <h3>Step 1: control grid</h3>
 <p>The first step is to create a data frame with the structure of each model to be estimated. Each column corresponds to a variable, each row corresponds to a model, and each cell takes value 1 if that variable is included in the model and value 0 otherwise. I will specify <code>run_to=2</code> to instruct <code>stability_plot</code> to run only Step 1.</p>
@@ -140,30 +145,207 @@ grid1 =<span class="st"> </span><span class="kw">stability_plot</span>(<span cla
                       <span class="dt">nonperm_fe =</span> nonperm_fe_controls, 
                       <span class="dt">run_to=</span><span class="dv">2</span>)
 
-<span class="kw">print</span>(grid1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    Diamond dimensions Depth Table width Cut FE Color FE np_fe</span>
-<span class="co">#&gt; 1                   1     0           0      0        0      </span>
-<span class="co">#&gt; 2                   1     1           0      0        0      </span>
-<span class="co">#&gt; 3                   1     0           1      0        0      </span>
-<span class="co">#&gt; 4                   1     1           1      0        0      </span>
-<span class="co">#&gt; 5                   1     0           0      1        0      </span>
-<span class="co">#&gt; 6                   1     1           0      1        0      </span>
-<span class="co">#&gt; 7                   1     0           1      1        0      </span>
-<span class="co">#&gt; 8                   1     1           1      1        0      </span>
-<span class="co">#&gt; 9                   1     0           0      0        1      </span>
-<span class="co">#&gt; 10                  1     1           0      0        1</span>
-<span class="kw">print</span>(grid1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    Diamond dimensions Depth Table width Cut FE Color FE        np_fe</span>
-<span class="co">#&gt; 39                  1     0           1      1        0 high_clarity</span>
-<span class="co">#&gt; 40                  1     1           1      1        0 high_clarity</span>
-<span class="co">#&gt; 41                  1     0           0      0        1 high_clarity</span>
-<span class="co">#&gt; 42                  1     1           0      0        1 high_clarity</span>
-<span class="co">#&gt; 43                  1     0           1      0        1 high_clarity</span>
-<span class="co">#&gt; 44                  1     1           1      0        1 high_clarity</span>
-<span class="co">#&gt; 45                  1     0           0      1        1 high_clarity</span>
-<span class="co">#&gt; 46                  1     1           0      1        1 high_clarity</span>
-<span class="co">#&gt; 47                  1     0           1      1        1 high_clarity</span>
-<span class="co">#&gt; 48                  1     1           1      1        1 high_clarity</span></code></pre></div>
+knitr<span class="op">::</span><span class="kw">kable</span>(grid1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="right">Cut FE</th>
+<th align="right">Color FE</th>
+<th align="left">np_fe</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">knitr<span class="op">::</span><span class="kw">kable</span>(grid1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="right">Cut FE</th>
+<th align="right">Color FE</th>
+<th align="left">np_fe</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>39</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="even">
+<td>40</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="odd">
+<td>41</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="even">
+<td>42</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="odd">
+<td>43</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="even">
+<td>44</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="odd">
+<td>45</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="even">
+<td>46</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="odd">
+<td>47</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+</tr>
+<tr class="even">
+<td>48</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="step-2-add-models-to-control-grid" class="section level3">
 <h3>Step 2: add models to control grid</h3>
@@ -178,52 +360,185 @@ grid1 =<span class="st"> </span><span class="kw">stability_plot</span>(<span cla
                       <span class="dt">run_to=</span><span class="dv">3</span>)
 
 
-<span class="kw">print</span>(grid2 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    Diamond dimensions Depth Table width np_fe</span>
-<span class="co">#&gt; 1                   1     0           0     0</span>
-<span class="co">#&gt; 2                   1     1           0     0</span>
-<span class="co">#&gt; 3                   1     0           1     0</span>
-<span class="co">#&gt; 4                   1     1           1     0</span>
-<span class="co">#&gt; 5                   1     0           0     0</span>
-<span class="co">#&gt; 6                   1     1           0     0</span>
-<span class="co">#&gt; 7                   1     0           1     0</span>
-<span class="co">#&gt; 8                   1     1           1     0</span>
-<span class="co">#&gt; 9                   1     0           0     0</span>
-<span class="co">#&gt; 10                  1     1           0     0</span>
-<span class="co">#&gt;                                   expr</span>
-<span class="co">#&gt; 1              price~carat+x+y+z|0|0|0</span>
-<span class="co">#&gt; 2        price~carat+x+y+z+depth|0|0|0</span>
-<span class="co">#&gt; 3        price~carat+x+y+z+table|0|0|0</span>
-<span class="co">#&gt; 4  price~carat+x+y+z+depth+table|0|0|0</span>
-<span class="co">#&gt; 5              price~carat+x+y+z|0|0|0</span>
-<span class="co">#&gt; 6        price~carat+x+y+z+depth|0|0|0</span>
-<span class="co">#&gt; 7        price~carat+x+y+z+table|0|0|0</span>
-<span class="co">#&gt; 8  price~carat+x+y+z+depth+table|0|0|0</span>
-<span class="co">#&gt; 9              price~carat+x+y+z|0|0|0</span>
-<span class="co">#&gt; 10       price~carat+x+y+z+depth|0|0|0</span>
-<span class="kw">print</span>(grid2 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    Diamond dimensions Depth Table width        np_fe</span>
-<span class="co">#&gt; 39                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 40                  1     1           1 high_clarity</span>
-<span class="co">#&gt; 41                  1     0           0 high_clarity</span>
-<span class="co">#&gt; 42                  1     1           0 high_clarity</span>
-<span class="co">#&gt; 43                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 44                  1     1           1 high_clarity</span>
-<span class="co">#&gt; 45                  1     0           0 high_clarity</span>
-<span class="co">#&gt; 46                  1     1           0 high_clarity</span>
-<span class="co">#&gt; 47                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 48                  1     1           1 high_clarity</span>
-<span class="co">#&gt;                                              expr</span>
-<span class="co">#&gt; 39       price~carat+x+y+z+table|high_clarity|0|0</span>
-<span class="co">#&gt; 40 price~carat+x+y+z+depth+table|high_clarity|0|0</span>
-<span class="co">#&gt; 41             price~carat+x+y+z|high_clarity|0|0</span>
-<span class="co">#&gt; 42       price~carat+x+y+z+depth|high_clarity|0|0</span>
-<span class="co">#&gt; 43       price~carat+x+y+z+table|high_clarity|0|0</span>
-<span class="co">#&gt; 44 price~carat+x+y+z+depth+table|high_clarity|0|0</span>
-<span class="co">#&gt; 45             price~carat+x+y+z|high_clarity|0|0</span>
-<span class="co">#&gt; 46       price~carat+x+y+z+depth|high_clarity|0|0</span>
-<span class="co">#&gt; 47       price~carat+x+y+z+table|high_clarity|0|0</span>
-<span class="co">#&gt; 48 price~carat+x+y+z+depth+table|high_clarity|0|0</span></code></pre></div>
+knitr<span class="op">::</span><span class="kw">kable</span>(grid2 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="left">np_fe</th>
+<th align="left">expr</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+table|0|0|0</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth+table|0|0|0</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+table|0|0|0</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth+table|0|0|0</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">knitr<span class="op">::</span><span class="kw">kable</span>(grid2 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="left">np_fe</th>
+<th align="left">expr</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>39</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+</tr>
+<tr class="even">
+<td>40</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+</tr>
+<tr class="odd">
+<td>41</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z|high_clarity|0|0</td>
+</tr>
+<tr class="even">
+<td>42</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth|high_clarity|0|0</td>
+</tr>
+<tr class="odd">
+<td>43</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+</tr>
+<tr class="even">
+<td>44</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+</tr>
+<tr class="odd">
+<td>45</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z|high_clarity|0|0</td>
+</tr>
+<tr class="even">
+<td>46</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth|high_clarity|0|0</td>
+</tr>
+<tr class="odd">
+<td>47</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+</tr>
+<tr class="even">
+<td>48</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="step-3-estimate-models" class="section level3">
 <h3>Step 3: estimate models</h3>
@@ -237,63 +552,273 @@ grid1 =<span class="st"> </span><span class="kw">stability_plot</span>(<span cla
                       <span class="dt">run_from=</span><span class="dv">3</span>,
                       <span class="dt">run_to=</span><span class="dv">4</span>)
 
-<span class="kw">print</span>(grid3 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    Diamond dimensions Depth Table width np_fe</span>
-<span class="co">#&gt; 1                   1     0           0     0</span>
-<span class="co">#&gt; 2                   1     1           0     0</span>
-<span class="co">#&gt; 3                   1     0           1     0</span>
-<span class="co">#&gt; 4                   1     1           1     0</span>
-<span class="co">#&gt; 5                   1     0           0     0</span>
-<span class="co">#&gt; 6                   1     1           0     0</span>
-<span class="co">#&gt; 7                   1     0           1     0</span>
-<span class="co">#&gt; 8                   1     1           1     0</span>
-<span class="co">#&gt; 9                   1     0           0     0</span>
-<span class="co">#&gt; 10                  1     1           0     0</span>
-<span class="co">#&gt;                                   expr     coef      p error_high error_low</span>
-<span class="co">#&gt; 1              price~carat+x+y+z|0|0|0 10461.86 p&lt;0.01   11031.84  9891.876</span>
-<span class="co">#&gt; 2        price~carat+x+y+z+depth|0|0|0 10808.25 p&lt;0.01   11388.81 10227.683</span>
-<span class="co">#&gt; 3        price~carat+x+y+z+table|0|0|0 10423.42 p&lt;0.01   10992.00  9854.849</span>
-<span class="co">#&gt; 4  price~carat+x+y+z+depth+table|0|0|0 10851.31 p&lt;0.01   11428.58 10274.037</span>
-<span class="co">#&gt; 5              price~carat+x+y+z|0|0|0 10461.86 p&lt;0.01   11031.84  9891.876</span>
-<span class="co">#&gt; 6        price~carat+x+y+z+depth|0|0|0 10808.25 p&lt;0.01   11388.81 10227.683</span>
-<span class="co">#&gt; 7        price~carat+x+y+z+table|0|0|0 10423.42 p&lt;0.01   10992.00  9854.849</span>
-<span class="co">#&gt; 8  price~carat+x+y+z+depth+table|0|0|0 10851.31 p&lt;0.01   11428.58 10274.037</span>
-<span class="co">#&gt; 9              price~carat+x+y+z|0|0|0 10461.86 p&lt;0.01   11031.84  9891.876</span>
-<span class="co">#&gt; 10       price~carat+x+y+z+depth|0|0|0 10808.25 p&lt;0.01   11388.81 10227.683</span>
-<span class="kw">print</span>(grid3 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    Diamond dimensions Depth Table width        np_fe</span>
-<span class="co">#&gt; 39                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 40                  1     1           1 high_clarity</span>
-<span class="co">#&gt; 41                  1     0           0 high_clarity</span>
-<span class="co">#&gt; 42                  1     1           0 high_clarity</span>
-<span class="co">#&gt; 43                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 44                  1     1           1 high_clarity</span>
-<span class="co">#&gt; 45                  1     0           0 high_clarity</span>
-<span class="co">#&gt; 46                  1     1           0 high_clarity</span>
-<span class="co">#&gt; 47                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 48                  1     1           1 high_clarity</span>
-<span class="co">#&gt;                                              expr     coef      p error_high</span>
-<span class="co">#&gt; 39       price~carat+x+y+z+table|high_clarity|0|0 10125.99 p&lt;0.01   10660.82</span>
-<span class="co">#&gt; 40 price~carat+x+y+z+depth+table|high_clarity|0|0 10456.79 p&lt;0.01   11002.18</span>
-<span class="co">#&gt; 41             price~carat+x+y+z|high_clarity|0|0 10155.28 p&lt;0.01   10691.08</span>
-<span class="co">#&gt; 42       price~carat+x+y+z+depth|high_clarity|0|0 10415.45 p&lt;0.01   10962.96</span>
-<span class="co">#&gt; 43       price~carat+x+y+z+table|high_clarity|0|0 10125.99 p&lt;0.01   10660.82</span>
-<span class="co">#&gt; 44 price~carat+x+y+z+depth+table|high_clarity|0|0 10456.79 p&lt;0.01   11002.18</span>
-<span class="co">#&gt; 45             price~carat+x+y+z|high_clarity|0|0 10155.28 p&lt;0.01   10691.08</span>
-<span class="co">#&gt; 46       price~carat+x+y+z+depth|high_clarity|0|0 10415.45 p&lt;0.01   10962.96</span>
-<span class="co">#&gt; 47       price~carat+x+y+z+table|high_clarity|0|0 10125.99 p&lt;0.01   10660.82</span>
-<span class="co">#&gt; 48 price~carat+x+y+z+depth+table|high_clarity|0|0 10456.79 p&lt;0.01   11002.18</span>
-<span class="co">#&gt;    error_low</span>
-<span class="co">#&gt; 39  9591.163</span>
-<span class="co">#&gt; 40  9911.405</span>
-<span class="co">#&gt; 41  9619.477</span>
-<span class="co">#&gt; 42  9867.945</span>
-<span class="co">#&gt; 43  9591.163</span>
-<span class="co">#&gt; 44  9911.405</span>
-<span class="co">#&gt; 45  9619.477</span>
-<span class="co">#&gt; 46  9867.945</span>
-<span class="co">#&gt; 47  9591.163</span>
-<span class="co">#&gt; 48  9911.405</span></code></pre></div>
+knitr<span class="op">::</span><span class="kw">kable</span>(grid3 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="left">np_fe</th>
+<th align="left">expr</th>
+<th align="right">coef</th>
+<th align="left">p</th>
+<th align="right">error_high</th>
+<th align="right">error_low</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+<td align="right">10461.86</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11031.84</td>
+<td align="right">9891.876</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+<td align="right">10808.25</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11388.81</td>
+<td align="right">10227.683</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+table|0|0|0</td>
+<td align="right">10423.42</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10992.00</td>
+<td align="right">9854.849</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth+table|0|0|0</td>
+<td align="right">10851.31</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11428.58</td>
+<td align="right">10274.037</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+<td align="right">10461.86</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11031.84</td>
+<td align="right">9891.876</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+<td align="right">10808.25</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11388.81</td>
+<td align="right">10227.683</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+table|0|0|0</td>
+<td align="right">10423.42</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10992.00</td>
+<td align="right">9854.849</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth+table|0|0|0</td>
+<td align="right">10851.31</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11428.58</td>
+<td align="right">10274.037</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+<td align="right">10461.86</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11031.84</td>
+<td align="right">9891.876</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+<td align="right">10808.25</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11388.81</td>
+<td align="right">10227.683</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">knitr<span class="op">::</span><span class="kw">kable</span>(grid3 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="left">np_fe</th>
+<th align="left">expr</th>
+<th align="right">coef</th>
+<th align="left">p</th>
+<th align="right">error_high</th>
+<th align="right">error_low</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>39</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+<td align="right">10125.99</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10660.82</td>
+<td align="right">9591.163</td>
+</tr>
+<tr class="even">
+<td>40</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+<td align="right">10456.79</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11002.18</td>
+<td align="right">9911.405</td>
+</tr>
+<tr class="odd">
+<td>41</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z|high_clarity|0|0</td>
+<td align="right">10155.28</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10691.08</td>
+<td align="right">9619.477</td>
+</tr>
+<tr class="even">
+<td>42</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth|high_clarity|0|0</td>
+<td align="right">10415.45</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10962.96</td>
+<td align="right">9867.945</td>
+</tr>
+<tr class="odd">
+<td>43</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+<td align="right">10125.99</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10660.82</td>
+<td align="right">9591.163</td>
+</tr>
+<tr class="even">
+<td>44</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+<td align="right">10456.79</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11002.18</td>
+<td align="right">9911.405</td>
+</tr>
+<tr class="odd">
+<td>45</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z|high_clarity|0|0</td>
+<td align="right">10155.28</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10691.08</td>
+<td align="right">9619.477</td>
+</tr>
+<tr class="even">
+<td>46</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth|high_clarity|0|0</td>
+<td align="right">10415.45</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10962.96</td>
+<td align="right">9867.945</td>
+</tr>
+<tr class="odd">
+<td>47</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+<td align="right">10125.99</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10660.82</td>
+<td align="right">9591.163</td>
+</tr>
+<tr class="even">
+<td>48</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+<td align="right">10456.79</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11002.18</td>
+<td align="right">9911.405</td>
+</tr>
+</tbody>
+</table>
 <p>Adjusting p-values, standard errors (e.g. robust, Conley), the width of confidence intervals, etc. is simple; an example is given in the main vignette. Using models other than <code>felm</code> is also simple once we have the data frame of formulas in place; an example follows later in this document.</p>
 </div>
 <div id="step-4-create-dataframes-to-plot" class="section level3">
@@ -311,98 +836,452 @@ grid1 =<span class="st"> </span><span class="kw">stability_plot</span>(<span cla
 coef_grid =<span class="st"> </span>dfs[[<span class="dv">1</span>]]
 control_grid =<span class="st"> </span>dfs[[<span class="dv">2</span>]]
 
-<span class="kw">print</span>(coef_grid <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    Diamond dimensions Depth Table width np_fe</span>
-<span class="co">#&gt; 1                   1     0           0     0</span>
-<span class="co">#&gt; 2                   1     1           0     0</span>
-<span class="co">#&gt; 3                   1     0           1     0</span>
-<span class="co">#&gt; 4                   1     1           1     0</span>
-<span class="co">#&gt; 5                   1     0           0     0</span>
-<span class="co">#&gt; 6                   1     1           0     0</span>
-<span class="co">#&gt; 7                   1     0           1     0</span>
-<span class="co">#&gt; 8                   1     1           1     0</span>
-<span class="co">#&gt; 9                   1     0           0     0</span>
-<span class="co">#&gt; 10                  1     1           0     0</span>
-<span class="co">#&gt;                                   expr     coef      p error_high error_low</span>
-<span class="co">#&gt; 1              price~carat+x+y+z|0|0|0 10461.86 p&lt;0.01   11031.84  9891.876</span>
-<span class="co">#&gt; 2        price~carat+x+y+z+depth|0|0|0 10808.25 p&lt;0.01   11388.81 10227.683</span>
-<span class="co">#&gt; 3        price~carat+x+y+z+table|0|0|0 10423.42 p&lt;0.01   10992.00  9854.849</span>
-<span class="co">#&gt; 4  price~carat+x+y+z+depth+table|0|0|0 10851.31 p&lt;0.01   11428.58 10274.037</span>
-<span class="co">#&gt; 5              price~carat+x+y+z|0|0|0 10461.86 p&lt;0.01   11031.84  9891.876</span>
-<span class="co">#&gt; 6        price~carat+x+y+z+depth|0|0|0 10808.25 p&lt;0.01   11388.81 10227.683</span>
-<span class="co">#&gt; 7        price~carat+x+y+z+table|0|0|0 10423.42 p&lt;0.01   10992.00  9854.849</span>
-<span class="co">#&gt; 8  price~carat+x+y+z+depth+table|0|0|0 10851.31 p&lt;0.01   11428.58 10274.037</span>
-<span class="co">#&gt; 9              price~carat+x+y+z|0|0|0 10461.86 p&lt;0.01   11031.84  9891.876</span>
-<span class="co">#&gt; 10       price~carat+x+y+z+depth|0|0|0 10808.25 p&lt;0.01   11388.81 10227.683</span>
-<span class="co">#&gt;    model</span>
-<span class="co">#&gt; 1      1</span>
-<span class="co">#&gt; 2      2</span>
-<span class="co">#&gt; 3      3</span>
-<span class="co">#&gt; 4      4</span>
-<span class="co">#&gt; 5      5</span>
-<span class="co">#&gt; 6      6</span>
-<span class="co">#&gt; 7      7</span>
-<span class="co">#&gt; 8      8</span>
-<span class="co">#&gt; 9      9</span>
-<span class="co">#&gt; 10    10</span>
-<span class="kw">print</span>(coef_grid <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    Diamond dimensions Depth Table width        np_fe</span>
-<span class="co">#&gt; 39                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 40                  1     1           1 high_clarity</span>
-<span class="co">#&gt; 41                  1     0           0 high_clarity</span>
-<span class="co">#&gt; 42                  1     1           0 high_clarity</span>
-<span class="co">#&gt; 43                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 44                  1     1           1 high_clarity</span>
-<span class="co">#&gt; 45                  1     0           0 high_clarity</span>
-<span class="co">#&gt; 46                  1     1           0 high_clarity</span>
-<span class="co">#&gt; 47                  1     0           1 high_clarity</span>
-<span class="co">#&gt; 48                  1     1           1 high_clarity</span>
-<span class="co">#&gt;                                              expr     coef      p error_high</span>
-<span class="co">#&gt; 39       price~carat+x+y+z+table|high_clarity|0|0 10125.99 p&lt;0.01   10660.82</span>
-<span class="co">#&gt; 40 price~carat+x+y+z+depth+table|high_clarity|0|0 10456.79 p&lt;0.01   11002.18</span>
-<span class="co">#&gt; 41             price~carat+x+y+z|high_clarity|0|0 10155.28 p&lt;0.01   10691.08</span>
-<span class="co">#&gt; 42       price~carat+x+y+z+depth|high_clarity|0|0 10415.45 p&lt;0.01   10962.96</span>
-<span class="co">#&gt; 43       price~carat+x+y+z+table|high_clarity|0|0 10125.99 p&lt;0.01   10660.82</span>
-<span class="co">#&gt; 44 price~carat+x+y+z+depth+table|high_clarity|0|0 10456.79 p&lt;0.01   11002.18</span>
-<span class="co">#&gt; 45             price~carat+x+y+z|high_clarity|0|0 10155.28 p&lt;0.01   10691.08</span>
-<span class="co">#&gt; 46       price~carat+x+y+z+depth|high_clarity|0|0 10415.45 p&lt;0.01   10962.96</span>
-<span class="co">#&gt; 47       price~carat+x+y+z+table|high_clarity|0|0 10125.99 p&lt;0.01   10660.82</span>
-<span class="co">#&gt; 48 price~carat+x+y+z+depth+table|high_clarity|0|0 10456.79 p&lt;0.01   11002.18</span>
-<span class="co">#&gt;    error_low model</span>
-<span class="co">#&gt; 39  9591.163    39</span>
-<span class="co">#&gt; 40  9911.405    40</span>
-<span class="co">#&gt; 41  9619.477    41</span>
-<span class="co">#&gt; 42  9867.945    42</span>
-<span class="co">#&gt; 43  9591.163    43</span>
-<span class="co">#&gt; 44  9911.405    44</span>
-<span class="co">#&gt; 45  9619.477    45</span>
-<span class="co">#&gt; 46  9867.945    46</span>
-<span class="co">#&gt; 47  9591.163    47</span>
-<span class="co">#&gt; 48  9911.405    48</span>
-<span class="kw">print</span>(control_grid <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))
-<span class="co">#&gt;    model                key value  y</span>
-<span class="co">#&gt; 1      1 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 2      2 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 3      3 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 4      4 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 5      5 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 6      6 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 7      7 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 8      8 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 9      9 Diamond dimensions     1 -1</span>
-<span class="co">#&gt; 10    10 Diamond dimensions     1 -1</span>
-<span class="kw">print</span>(control_grid <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))
-<span class="co">#&gt;     model         key value  y</span>
-<span class="co">#&gt; 135    39 Table width     1 -3</span>
-<span class="co">#&gt; 136    40 Table width     1 -3</span>
-<span class="co">#&gt; 137    41 Table width     0 -3</span>
-<span class="co">#&gt; 138    42 Table width     0 -3</span>
-<span class="co">#&gt; 139    43 Table width     1 -3</span>
-<span class="co">#&gt; 140    44 Table width     1 -3</span>
-<span class="co">#&gt; 141    45 Table width     0 -3</span>
-<span class="co">#&gt; 142    46 Table width     0 -3</span>
-<span class="co">#&gt; 143    47 Table width     1 -3</span>
-<span class="co">#&gt; 144    48 Table width     1 -3</span></code></pre></div>
+knitr<span class="op">::</span><span class="kw">kable</span>(coef_grid <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="left">np_fe</th>
+<th align="left">expr</th>
+<th align="right">coef</th>
+<th align="left">p</th>
+<th align="right">error_high</th>
+<th align="right">error_low</th>
+<th align="right">model</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+<td align="right">10461.86</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11031.84</td>
+<td align="right">9891.876</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+<td align="right">10808.25</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11388.81</td>
+<td align="right">10227.683</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+table|0|0|0</td>
+<td align="right">10423.42</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10992.00</td>
+<td align="right">9854.849</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth+table|0|0|0</td>
+<td align="right">10851.31</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11428.58</td>
+<td align="right">10274.037</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+<td align="right">10461.86</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11031.84</td>
+<td align="right">9891.876</td>
+<td align="right">5</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+<td align="right">10808.25</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11388.81</td>
+<td align="right">10227.683</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+table|0|0|0</td>
+<td align="right">10423.42</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10992.00</td>
+<td align="right">9854.849</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth+table|0|0|0</td>
+<td align="right">10851.31</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11428.58</td>
+<td align="right">10274.037</td>
+<td align="right">8</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z|0|0|0</td>
+<td align="right">10461.86</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11031.84</td>
+<td align="right">9891.876</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">0</td>
+<td align="left">price~carat+x+y+z+depth|0|0|0</td>
+<td align="right">10808.25</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11388.81</td>
+<td align="right">10227.683</td>
+<td align="right">10</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">knitr<span class="op">::</span><span class="kw">kable</span>(coef_grid <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="left">np_fe</th>
+<th align="left">expr</th>
+<th align="right">coef</th>
+<th align="left">p</th>
+<th align="right">error_high</th>
+<th align="right">error_low</th>
+<th align="right">model</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>39</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+<td align="right">10125.99</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10660.82</td>
+<td align="right">9591.163</td>
+<td align="right">39</td>
+</tr>
+<tr class="even">
+<td>40</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+<td align="right">10456.79</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11002.18</td>
+<td align="right">9911.405</td>
+<td align="right">40</td>
+</tr>
+<tr class="odd">
+<td>41</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z|high_clarity|0|0</td>
+<td align="right">10155.28</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10691.08</td>
+<td align="right">9619.477</td>
+<td align="right">41</td>
+</tr>
+<tr class="even">
+<td>42</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth|high_clarity|0|0</td>
+<td align="right">10415.45</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10962.96</td>
+<td align="right">9867.945</td>
+<td align="right">42</td>
+</tr>
+<tr class="odd">
+<td>43</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+<td align="right">10125.99</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10660.82</td>
+<td align="right">9591.163</td>
+<td align="right">43</td>
+</tr>
+<tr class="even">
+<td>44</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+<td align="right">10456.79</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11002.18</td>
+<td align="right">9911.405</td>
+<td align="right">44</td>
+</tr>
+<tr class="odd">
+<td>45</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z|high_clarity|0|0</td>
+<td align="right">10155.28</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10691.08</td>
+<td align="right">9619.477</td>
+<td align="right">45</td>
+</tr>
+<tr class="even">
+<td>46</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth|high_clarity|0|0</td>
+<td align="right">10415.45</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10962.96</td>
+<td align="right">9867.945</td>
+<td align="right">46</td>
+</tr>
+<tr class="odd">
+<td>47</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+table|high_clarity|0|0</td>
+<td align="right">10125.99</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">10660.82</td>
+<td align="right">9591.163</td>
+<td align="right">47</td>
+</tr>
+<tr class="even">
+<td>48</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">high_clarity</td>
+<td align="left">price~carat+x+y+z+depth+table|high_clarity|0|0</td>
+<td align="right">10456.79</td>
+<td align="left">p&lt;0.01</td>
+<td align="right">11002.18</td>
+<td align="right">9911.405</td>
+<td align="right">48</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">knitr<span class="op">::</span><span class="kw">kable</span>(control_grid <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">model</th>
+<th align="left">key</th>
+<th align="left">value</th>
+<th align="right">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="right">7</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="even">
+<td align="right">8</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="odd">
+<td align="right">9</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+<tr class="even">
+<td align="right">10</td>
+<td align="left">Diamond dimensions</td>
+<td align="left">1</td>
+<td align="right">-1</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">knitr<span class="op">::</span><span class="kw">kable</span>(control_grid <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">model</th>
+<th align="left">key</th>
+<th align="left">value</th>
+<th align="right">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>135</td>
+<td align="right">39</td>
+<td align="left">Table width</td>
+<td align="left">1</td>
+<td align="right">-3</td>
+</tr>
+<tr class="even">
+<td>136</td>
+<td align="right">40</td>
+<td align="left">Table width</td>
+<td align="left">1</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td>137</td>
+<td align="right">41</td>
+<td align="left">Table width</td>
+<td align="left">0</td>
+<td align="right">-3</td>
+</tr>
+<tr class="even">
+<td>138</td>
+<td align="right">42</td>
+<td align="left">Table width</td>
+<td align="left">0</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td>139</td>
+<td align="right">43</td>
+<td align="left">Table width</td>
+<td align="left">1</td>
+<td align="right">-3</td>
+</tr>
+<tr class="even">
+<td>140</td>
+<td align="right">44</td>
+<td align="left">Table width</td>
+<td align="left">1</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td>141</td>
+<td align="right">45</td>
+<td align="left">Table width</td>
+<td align="left">0</td>
+<td align="right">-3</td>
+</tr>
+<tr class="even">
+<td>142</td>
+<td align="right">46</td>
+<td align="left">Table width</td>
+<td align="left">0</td>
+<td align="right">-3</td>
+</tr>
+<tr class="odd">
+<td>143</td>
+<td align="right">47</td>
+<td align="left">Table width</td>
+<td align="left">1</td>
+<td align="right">-3</td>
+</tr>
+<tr class="even">
+<td>144</td>
+<td align="right">48</td>
+<td align="left">Table width</td>
+<td align="left">1</td>
+<td align="right">-3</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="step-5-draw-panels" class="section level3">
 <h3>Step 5: draw panels</h3>
@@ -464,44 +1343,164 @@ grid1 =<span class="st"> </span><span class="kw">stability_plot</span>(<span cla
 <span class="co"># Complete formula with LHS and RHS variables</span>
   grid1<span class="op">$</span>expr =<span class="st"> </span><span class="kw">paste</span>(lhs_var, <span class="st">'~'</span>, rhs_var, <span class="st">'+'</span>, grid1<span class="op">$</span>expr, <span class="dt">sep=</span><span class="st">''</span>)
   
-  <span class="kw">print</span>(grid1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))
-<span class="co">#&gt;   Diamond dimensions Depth Table width Clarity np_fe</span>
-<span class="co">#&gt; 1                  1     0           0       0      </span>
-<span class="co">#&gt; 2                  1     1           0       0      </span>
-<span class="co">#&gt; 3                  1     0           1       0      </span>
-<span class="co">#&gt; 4                  1     1           1       0      </span>
-<span class="co">#&gt; 5                  1     0           0       1      </span>
-<span class="co">#&gt; 6                  1     1           0       1      </span>
-<span class="co">#&gt; 7                  1     0           1       1      </span>
-<span class="co">#&gt; 8                  1     1           1       1      </span>
-<span class="co">#&gt;                                                  expr</span>
-<span class="co">#&gt; 1                     above_med_price~carat+x + y + z</span>
-<span class="co">#&gt; 2               above_med_price~carat+x + y + z+depth</span>
-<span class="co">#&gt; 3               above_med_price~carat+x + y + z+table</span>
-<span class="co">#&gt; 4         above_med_price~carat+x + y + z+depth+table</span>
-<span class="co">#&gt; 5             above_med_price~carat+x + y + z+clarity</span>
-<span class="co">#&gt; 6       above_med_price~carat+x + y + z+depth+clarity</span>
-<span class="co">#&gt; 7       above_med_price~carat+x + y + z+table+clarity</span>
-<span class="co">#&gt; 8 above_med_price~carat+x + y + z+depth+table+clarity</span>
-  <span class="kw">print</span>(grid1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))
-<span class="co">#&gt;   Diamond dimensions Depth Table width Clarity np_fe</span>
-<span class="co">#&gt; 1                  1     0           0       0      </span>
-<span class="co">#&gt; 2                  1     1           0       0      </span>
-<span class="co">#&gt; 3                  1     0           1       0      </span>
-<span class="co">#&gt; 4                  1     1           1       0      </span>
-<span class="co">#&gt; 5                  1     0           0       1      </span>
-<span class="co">#&gt; 6                  1     1           0       1      </span>
-<span class="co">#&gt; 7                  1     0           1       1      </span>
-<span class="co">#&gt; 8                  1     1           1       1      </span>
-<span class="co">#&gt;                                                  expr</span>
-<span class="co">#&gt; 1                     above_med_price~carat+x + y + z</span>
-<span class="co">#&gt; 2               above_med_price~carat+x + y + z+depth</span>
-<span class="co">#&gt; 3               above_med_price~carat+x + y + z+table</span>
-<span class="co">#&gt; 4         above_med_price~carat+x + y + z+depth+table</span>
-<span class="co">#&gt; 5             above_med_price~carat+x + y + z+clarity</span>
-<span class="co">#&gt; 6       above_med_price~carat+x + y + z+depth+clarity</span>
-<span class="co">#&gt; 7       above_med_price~carat+x + y + z+table+clarity</span>
-<span class="co">#&gt; 8 above_med_price~carat+x + y + z+depth+table+clarity</span></code></pre></div>
+  knitr<span class="op">::</span><span class="kw">kable</span>(grid1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="right">Clarity</th>
+<th align="left">np_fe</th>
+<th align="left">expr</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+depth</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+table</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+depth+table</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+clarity</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+depth+clarity</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+table+clarity</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+depth+table+clarity</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">  knitr<span class="op">::</span><span class="kw">kable</span>(grid1 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">tail</span>(<span class="dv">10</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Diamond dimensions</th>
+<th align="right">Depth</th>
+<th align="right">Table width</th>
+<th align="right">Clarity</th>
+<th align="left">np_fe</th>
+<th align="left">expr</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+depth</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+table</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+depth+table</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+clarity</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+depth+clarity</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+table+clarity</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left"></td>
+<td align="left">above_med_price~carat+x + y + z+depth+table+clarity</td>
+</tr>
+</tbody>
+</table>
 <p>Our grid seems to be in order. We will also need to define a custom function for our logit model:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">starb_logit =<span class="st"> </span><span class="cf">function</span>(spec, data, rhs, ...) {
   spec =<span class="st"> </span><span class="kw">as.formula</span>(spec)
@@ -523,22 +1522,7 @@ grid1 =<span class="st"> </span><span class="kw">stability_plot</span>(<span cla
                <span class="dt">perm =</span> perm_controls,
                <span class="dt">base =</span> base_controls,
                <span class="dt">fe_always =</span> F,
-               <span class="dt">run_from=</span><span class="dv">3</span>)
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span></code></pre></div>
+               <span class="dt">run_from=</span><span class="dv">3</span>)</code></pre></div>
 <p><img src="data:image/png;base64,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SExMjCdvcXFxkpmZKffff79nHQsIIIAAAggggAACCFgl4DOYTU9Pl+XLl5u8DB061AzFlZKSYlXeOA8CCCCAAAIIIIAAAj4FfAaz3nu+9957puf6zp07xd0bTpsZaA/BgwcPmnFovbdnGQEEEEAAAQQQQACBYAv4Hcy+9tprctttt0lFs4DdcsstBLPBvlIcHwEEEEAAAQQQQKCcgN+jGdxzzz1yxRVXyCeffGKGdtAxZ6dNmyaNGzeWxx9/vNyBWYEAAggggAACCCCAQLAF/KqZ1aYEe/fulUmTJkmzZs0kIyND6tSpI3fddZfpHPbYY4/JU089Fey8cnwEEEAAAQQQQAABBEoJ+FUzm5SUJDpygXtYrg4dOng6hvXp00d0CC8SAggggAACCCCAAAJWC/gVzGog261bN3nooYfMdHA6je0777xjhutauHChtGrVyup8cz4EEEAAAQQQQAABBMSvZgbq9OKLL8qQIUOkf//+oh2+zjjjDNFhunREAx3pgIQAAggggAACCCCAgNUCfgezZ555pmzfvl3y8/NNELt27Vr56KOPzDS3LVu2tDrfnK+aAiUlJRIVFVXlXv5uV+WB2AABBBBAAAEEELBAwO9gVvOigY4Gsbm5uSZrGsT++OOPZqzZrl27WpBdTlFdgd27d8s//vEP+eyzz8z4wPqjRGd1S05O9hwqJydHZs+eLUuWLDHXskePHjJ+/HipXbu2ZxsWEEAAAQQQQAABOwpEuQLUEn8y9txzz8mECRNMm9my21955ZXy9ttvl13NaxsI3HnnnWbEiZtuusnUqs+cOdPUrM+YMcOTu2effVZWrFghOvxabGys6GutxX355Zf9qs31HIgFBBBAAAEEbCiwY8cOOXbsmHTu3NmGuQtulrQCcv369dKuXTsztGpwzxaao/vVAay4uFieeOIJM56sfhi0naz346233gpN7jmrT4FVq1bJ119/LXfffbf069dPzjvvPPntb38r33//veg/bE2bN2+WefPmiQa9vXr1Eu3cN3HiRNm0aZPo/iQEEEAAAQQQQMDOAn4Fs9pOVqesHTZsmInqo6OjxfvhT1tMOyOEa960SYHWmOtQau505MgRs6g1sJpWr15thl3r27evea3/yczMlObNm5vaWs9KFhBAAAEEEEAAARsK+BXM6viyw4cPl2eeeUa0fSXJGQL6I0NnaNN0/PhxM3vb66+/LmeffbZn/a5du8wEGDr8mndKT0+Xw4cPe69iGQEEEEAAAQQQsJ2A3x3AHnzwQdPWRIfo0s5eWjPrTueff76ZHcz9mmf7CYwZM0Z++OEHU7Ouy+504sSJCtvQpKamirsW172ttqvVttPupE0TvGt93et5RgABBBBAwE4CWjmjlTp6lznSkraZPXr0qBw6dMj0oXFi+fVuss48W1nyO5gdOnSoqc274IILpG7duqWOd/rpp5d6zQv7CTzwwAPmH/Gbb74pN954o5l+uFOnTqbDl/cPE3fOtVa3oKDA/dI860xwTZo08axLTEyUmJgYz2sWEEAAgeoI6HdMuN8B0u/I+vXrV4eFbYMg4G4aGYl/s7TMTi9/VdfNr2A2OztbvvnmG9NxqGPHjkH4mHHIYAtoO1h9aACrP0x0jGBdrlevXoUjVOgvWO/huzR/Ogvc008/HeyscnwEEIgQAW22tmfPHstKq99rWjul34VWpYSEhHIVQFadm/P8v4DGMRrQla2M+/8twnOpJCtLcnZsl6SfN0taXKzU7thJolzNCMMt+RXM6kxfOqbsyZMnw638YV0eHbFA/1D07t3bU06tXdUfJBs2bDDrtG2s3n7Q0Sm8f/lobYmON0tCAIHgCuzcubNck55gnlE79Oqdl7Lt5IN5Tr2jo981ZZN+H+mPZKuS3mLetm2baSpHx2Wr1DlPqAQKFi+SohVfSL6rmUHhvn1SsGWz5C36WGJ695W4wReFKltBOa9fwaye+U9/+pNcfvnlMm7cOGnVqpXoLWZ3atCgQUSO3eYuv12fFy1aJH/7299EO33p6ASatGZCx5sbMGCAea3DcU2bNs1MhqHLmnSiBf3CHzFihHnNfxBAIHgCegfEysDqp59+Mt/fDRs2DF6hyhxZOxGTEEDAOoGCjz+U/A8WSkyz5hLlam8alX1CXIPMi7juFBQuXyaugeclbugw6zIU5DP5HcyOGjXKzA6lnX7KJiZNKCtij9cDBw40gaxOgnDHHXeYSRNeeeUV0XGD/+d//sdkUn+YaA2sBrSTJk0yf+SmTJkiXbp0kf79+9ujIOQirAV03hYd7zjcU5s2bSosot72tPLWp44VrjWiTZs2rTA/rLROQO+QWXnHU2+1a7MHK2vldaB+vbtLsk6gZP9+KVz8mQlkXb+US5/Y9VqbGRR++7XEdOsh0a677uGQ/A5m97mqqCubLMz79nQ4oIRLGfTWngaoU6dOlRtuuMEUS2vRH3vsMTMTiLucOrObjlahw6/ptdTg9t5777W0tsidF54RCLaAttPcsmWLtG7dWqgxDLY2x/cl0KhRIzPNuK9tavI97fuindEyMjJq8rA+j6XBM8lagaKNGyRK74aUDWS9s1FcIkXrv42MYPbLL780v6h0+reVK1dW+o9Ob1cxooH3p8Q+y9pe9p133hH9MaKN3zWYLZv0i2369Omm7axuk5aWVnYTXiMQNAG9xV5ZrWUwTqrD0Wkv+tNOO83UUAbjHBwTAX8ErKyR1/zo+awOZv1xYJuaFSg+sF9cNVO+DxofL8WuGtxwST5rZrXNpI4pO2fOHLnkkktMM4OKCk4zg4pU7LNOgwWtAagq+RrDrap9eR8BBBBAAAEEQi8Q5WpGVFJcJGUaGJTOmKvTd5RX36fSbzrvlc9gdu3atZ5bzft9RPBam0dCAAEEEEAAAQQQCK1AdKvTRP7zle9MuO5ORbdt63sbB73rMwrVRuI664Kmiy++2HQgindVTXs/tNb2+uuvd1CRySoCCCCAAAIIIBCeAjGuIDU6o4GUHD5UYQFLjhwxzRBiO4XPhFc+a2a1zezHH39sMJYtWyaTJ08u1WFCxyadP3++tA2j6L7CK89KBBBAAAEEEEDACQIxsZJw/Y1y8qmpYgJXVyWkaxgjcXUWkOKCfImuXVtq3e4amSqMhszzGcxqp4yxY8eauXy1w8SCBQtKDayvNbeZrplU7r//fidcXvKIAAIIIIAAAgiEv4ArUE289z4p+mqN5LservnsXePMpkr8GWdITC/XREph1F5WL6bPYFZnbFm+fLm56DoFqjYpYLy48P83QAkRQAABBBBAwOECcfES0/csSejeUxJckyXVco35G5ua6vBCVZx9n8Gs9y7vvfee90uWEUAAAQQQQAABBBAIuYDPDmDeudNZoz744APTCUzXP/nkk2a4Lp1RioQAAggggAACCCCAQCgE/A5m//jHP8qvf/1r2bNnj2lucN9995n8jhw5Ut56661Q5J1zIoAAAggggAACCES4gN/BrM4QtXDhQmnpmsf31VdfNUN1vfvuu/Lwww/Lm2++GeGMFB8BBBBAAAEEEEAgFAJ+BbOHDx+W48ePS//+/eXkyZOyePFiufTSS01+dX7zg9pLjoQAAggggAACCCCAgMUCfnUA0/mck1zToy1dutQ0M8jPz5fBgwdLYWGhaWIwYMAAi7PN6RBAAAEEEEAAAQQQqGJoLjdQVFSUaJvZCy64wDXubrHcdddd0qhRIxk2bJjoxArjx493b8pzBAloLb0+SAg4SeDEiROSlZUlescpNzfXSVmvkbwePXrUdORNDdMhenwhHXHNfOS+9vp3LdKSlj05Odkzs2cklV8/93qHWf/dR1rS7zn3517nDHBiiomJkdquyR4qS37VzOrO2uHrwgsvNF/+vXu7Btx1pVGjRoku6z8OUuQJJLoGXdYHCQEnCSQkJJgvxXr16pk7Tk7Ke03ktU6dOqbcWv5IS1oZc+zYMdGyR2Iwq8GA3mmNxGuvP2Kjo6MjsuwazOq11+serj9i/Woz6/7Ca+cacHfLli3yyCOPyO7duw0KwYxbh2cEEEAAAQQQQAABqwX8rpndsGGDqZndu3evaWowZMgQmTBhgqm6njdvnml2YHXmOR8CCCCAAAIIIFCZQG7BMdm0b5n8Z8NnrmYGJ+Rk0nnSpuE5UiepaWW7sN6BAn7XzI4YMUL69esn+/fvl+bNm5uizpo1y1Tbv/HGGw4sOllGAAEEEEAAgXAVOHxiu7yy9Dr58LvJ8tP+pbLt4BpZ/MPz8uKiS2Tjnk/DtdgRWS6/gtmcnBxZtWqVGVM2LS3NA9WwYUPTblbHnyUhgAACCCCAAAJ2EDh2cp/MXHylnCxwdXpLSJfEuNpSKy5VUhIyJC2xobz15V0EtHa4UDWUB7+C2djYWFMDqw2oy6b169eb98qu5zUCCCCAAAIIIBAKgc9/mO6KTWIkKb5uudPHRsdLvZSWsmjDc1JcUljufVY4T8CvYDY+Pl4GDRokY8aMkdWrV5tSam3tnDlzRGcG0zFnSQgggAACCCCAQKgFikuKTLOCVFctbGUpLqaW5BfmyN6sjZVtwnoHCfjdAWzmzJlm1i8dikuHNNGJEnS8st/85jcycuRIBxWZrCKAAAIIIIBAuApopy+REles4ru+rqSkWE7kHQlXhogql9/BbJMmTWTlypVmFrCNGzeK1tZ2797dPCJKjMIigAACCCCAgG0FasW5+vaUuP5fogGt78kxEuP/vx+QbQtExqoU8DuY1SPph+Lcc881jyqPzAYIIIAAAggggIDFAtFRMZKZ0Ud+3r/cdP6q6PSFxfkSH5skjWp3rOht1jlMwHcdvMMKQ3YRQAABBBBAAIFftLvVtIk9mZ9VDqO4uFAOHNssv+w0WrQzGMn5AgSzzr+GlAABBBBAAAEEvATqp7SSW/vPlYKiXDl+cr/kFmRLftEJyc49ILmFx+XX3SdKh8a/8tqDRScLVKuZgZMLSt7FzNymc1P7Sv60MfK1P+8hgAACthU4eVJKsrNFilzDMcXG2TabZKxmBNJTMuX3578nP+xdJF+t/0yyY09I37b9pW3D8yQjtXXNnISj2ELA72B24MCB8s9//lNSUlJKZVxnAfvoo4/MMF2l3uCFLQS2bNkiL7zwgnzzzTdSWFgop512mvzud7+TM88805M/HWZt9uzZsmTJEjM9cY8ePWT8+PFSu3ZtzzYsIIAAAk4VKNr0kxR+9qnkbtsq+VlZcvKLpRJ3eheJ/dUgiUpMdGqxyLcfAim16ssZmVdJg5h+cuzYMencprMfe7GJ0wR8BrNffvmlfPzxx6ZMy5Ytk8mTJ0utWrU8ZSwqKpL58+dL27ZtPetYsI+A/sMdO3as1KtXT+655x4TnM6dO9csz5gxQ9q3b28yq8OurVixwqzXCTKeffZZGT16tLz88stV9gS1T2nJCQIIIFBeoOjrdZL/5usSVbuOSK0kkZN5EpWQIIVrVknhuv9I4uhxIqmp5XdkDQIIOEbAZzDbpk0bEwzl5eWZMWUXLFggMTExnsLFxcVJZmam3H///Z51LNhHYOnSpXLw4EF57LHHpGPH//bY7Ny5sxkvWKcg1mB28+bNMm/ePHn00UelV69eJvMTJ06U6667zkxh3KdPH/sUiJwggAAC1RAo2bVT8t6aI9H1XYPn69+u7P+bxdI1Mk9U3XpS4qqlzX3jNak14tb/vl+NY7MpAgjYR8BnMJueni7Lly83uR06dKhpSlC2mYF9ikJOygq0a9dO7r77bk8gq+8nJyebGlr31MQ6o5v+KOnbt69nd/2B0rx5c1NbSzDrYWEBAQQcJlC4epVEJblqY70qYbyLEOVqSlVy4IAU79gu0ZmtvN9iGQEEHCTgM5j1Lsd7770nWkO7fft28+z9nga4jRs39l7Fsg0EtPlH2SYg2nZ27969cvXVV5sc7tq1S+rUqWMCWu8s6w+Zw4cPe69iGQEEEHCUQNH2bRJVq4o2sa6+BCUH9osQzDrq2pJZBLwF/A5m//GPf8jNN98sR48e9d7fLF955ZXy9ttvl1vPCnsJaEevp59+Wlq0aCFDhgwxmdMa2tQK2ovpuiNHSk/z9/3334u2uXWnSy+91BzL/ZpnBJwgoJ/5bFeP9izXLWadkjvS0vHjx01nUC1/uKdoVwWMuPp2uKaCMkUtLCwwZdfr7p4ZKso1skGO6zNRHAEeeu21L0WCq81wpCUtt5Y/Ej73Za9tbm6u5zuvuLi47NuOeK1NXH21DPA7mP39738vw4YNk9tvv910KPIuva8TeG/HcugE9A/4vffeK/v27ZPnn3/eUxOrHb4qGq5Lv+jL/qHX9rfaUcydfvGLX0jDhg3dL3lGwBECeocpPz/f3GHy7gPgiMzXQCa17FpudQj3FJdeX2JctbMl/zdigf4hL3E99NkTzEbHSEFKqhRFgId+p+t1j4RrX/azrZ9797/7su+F+2v3d56Ty6/NIX0lv4JZ/UWzf/9+mTJlijRo0MDX8XjPhgL6S1RHNdDmBc8884xoxz530pEO9Ndq2aTrtH2td2IqY28Nlp0qoD/stAmNfpclaXvKCEuHDh0y5Y6E7/LiX5xrOoBFxbtmeXL9QI8vKJQ417LWTJpg1lVjVeJ6nda1m4huE+ZJv+8zMjIi8u+4BnTxrmscCZ/7sh9jrZk94Gobrte+ojuxZbd34mvfI+j/X4nS0tKkVatWsmbNGieWMaLzrD9EdJgtbTLw5z//WTp06FDKQ9vGatMRHWbNO+kf+yZNmnivYhkBBBBwlEB023YS06u3FO/c+d/mBl65L8k5ISW5JyXhd7dHRCDrVXQWEQg7Ab9qZrXUkyZNkjFjxshO15eCBrZ6e9qd9JeODvlEspeA3kobN26cqXl98cUXpVGjRuUyqMNxTZs2TdauXesZmmv37t2ybds2GTFiRLntWYEAAgg4SSB+8EUS7Rq1oHDZUhO8itbGuvoPxLiaSMVfPFSiXE0RSAgg4GyB/49IqyiHtpnV29U6e1TZRAewsiL2eP3vf/9bNmzYIJdccokZM9Y7V/oDRIfj0h8mOuOXBrT6gyXR1bZMm5N06dJF+vfv770LywgggIAjBWL7nS2xvc6UhI0/SOzPP0vC2WdJjI49S0IAgbAQ8DuY1Y5DJf/XI7RsySOxE0VZAzu+/uCDD0y23n333XLZ6927t2ds2QkTJsiDDz4ow4cPNx1DNLjVzmLuDhLldmZFjQtow3xt1xTOSRvw648lEgIhEYiLl2jXEJIxrn9r0dTGhuQScFIEgiXgdzCrDeZPnjwpGhj9+OOPZpguvR3ds2fPCnvDByvDHNd/AW1a4E/SRuHTp083bWd1ZANtI02yVkDbNGsTHquS3mUpdI2vqW2mrUr169eXli1bWnU6zoMAAgggECECfgezerv6wgsvND3itS2mjlOqNXr6R1GnQ62oPWaEGIZNMXXyBFJoBDTQq1u3rmUn37p1q6kJLtshMJgZqGgIuGCej2MjgAACCESGgN/BrHYG6tevn8yYMcO0sVSeWbNmyeWXXy5vvPGG6RwWGWSUEoGaF9CmOlY219EhavRHqT6TEEAAAQQQcLKAX8Gszhy1atUqmT17dqlb0Dpg/qhRo2TmzJkEs07+FNgk7zqWsd76DuekTTqqGvw5nMtP2RBAAAEEEKhpAb+CWfcsUTrYeNm0fv162syWReH1KQno2LbaEcqKpJ0Zt2zZYvkg0tqUgGDWiivMORBAAAEEIkXAr2BWb0UOGjTI1L5OnTrV2Ght7Zw5c0zHofvuuy9SvChnEAWsbL+pt9i1FjgzM9PSTlBB5OPQCCCAAAIIRKSAX8GsymhTgksvvVR0SCcdsmnAgAGi8zz/5je/kZEjR0YkHoVGAAEEEEAAAQQQCK2A38GsTm26cuVKWbp0qWzcuNF0HOnevbvog4QAAggggAACCCCAQCgEfAazX375paSkpJipapcsWeLpnNO6dWuT10OHDsmnn34q2hHs9NNPD0X+OScCCCCAAAIIIIBABAv4DGZ1OK6uXbuatrE6JaqOKVtRYjrbilRYhwACCNhHYPfR72T9rg/kq3XLJSExXnrm9pcuzS6Weskt7JNJcoIAAgicgoDPYHbt2rWeKU112KTKEoOhVybDegQQQCD0Ais2z5IvfnrFlZESOZ5bLLkl0bJ6y+uudX+T4f1mSIv0M0KfSXKAAAIInKJAtK/9dAghHZZLk45ooA9d517W3uC67N7G17F4DwEEELCDQLFrWLbcwiJxPUVE+nrHe/L+N49LUnwdSU5Il9iYWhIXkygpCRmSUitD/r58hOw68k1EWFBIBBAITwGfwax3kffs2SO//e1vzcQJul7HnG3VqpU888wznra03tuzjAACCNhJYE9urjz902a5bvV/5I/fb5Dhq7+SZzf9LAfzrBnbOBQWhUX5svTHGdIwrY3rLlv5r/s4V2CbnFDPtc3MUGSPcyKAAAI1IuCzmYH3GcaMGSP79u2TP/zhD2Z1YmKiPPvss3L//fdLy5Yt5bLLLvPenOUIEMh1BQf6cGLScWaPHz9u2oFbOY2sXayOHTtmrt3Ro0ftkqWg5mO/azKO27//QeKjoyXJde0TXLWyMUXFsnDXbvn3zt3yQsd20jAh/Kb23Xd8o+TmZUtCbKoUFxUY48LCAomOKTZDK+qK2Kgk2XHwa9l/aLfExyQF9TqE+uDa70P/3evnXoeYjLTk/s7TO6qRlryvfaSVXf9Ouz/3RUVFjiy+/p1OTU2tNO9+BbM6K9OHH34oOtuXDtGlSdvJXn311QZIJ08gmK3UOGzfSEhIcOxsVhrMJiUlmdE6fP0DCdeLl5ycLFV9OYRL2bMKCmX0dxskMTZO6sbHSaGrfYGWPT4uVhrWqiVH8gvkka3b5YXuXSUlNiZcim3KcSiv2FXW6FJNwWJiYiXGVU7v5mGxJa5mZLWiJLVW5X8swgEmLy/P/LvXf/ORGMxG8neejsyk3/uR+H2vzUP12mvZnVr+qv69+hXM6kF0goRdu3Z5gln3F5vW8Og0pKTIE9DPhVNrNd151/w7tQyBfOLc5Y6Esq84cNBFFSX13DWvrs+tXn/X/82zrj/kamrw5dEsGdQwIxBW2+2bltTAVcjoUoGbKbvLQ581lUixWU5LypDoqPAK5steEO/Pvbv8ZbcJ59fe5Q/nclZUNsr+37914fqdX74RVQWfAo3qzz//fNFpa3fs2OHZYs2aNabN7ODBgz3rWEAAAQTsJLDuSJareYHvW8oxrve/DsMmF+kpp7lqWzMkrzC70kty/OQ+advwF65A1q+6jUqPwxsIIIBAqAT8CmY1c7NmzTJt7Fq0aCG1a9cWbTN75plnSv/+/WXs2LGhyj/nRQABBHwK5LtuLVZVC+equ5S8MBzeINpVKzuo871yzBWw5hWeKOeUnfvfWusBHZmSvBwOKxBAwDECfv8Ur1fP1ePVNZXtDz/8IOvWrTNtZrt06SKdOnVyTGHJKAIIRJ5A29QUWX3kqKT6+LYrKCmWtinJYYnTIr2n3PSL1+W1L26VwqKTkpOXIwWu4D3R1X40LamR/M+Zz7mG7aoblmWnUAggEBkCPr7eRSqbzrZBA1c7LFfS4br0wXS2kfFhoZQIOFHgF/XTZa5r1IIi7fj1f+1EvcuhHcJyXOPO9nP9YA/X1LRuF7nzVwtk+6GvZFXREklKTJLunc+RzPpnmjFnw7XclAsBBCJDwGcwy3S2kfEhoJQIhLNAy6REuaZ5U5m+eas0qpVQqqgFriYIW07kyAOd2ksL13bhnHQ82Y5NBopkNTM9m1s2bBnOxaVsCCAQQQI+g9lrrrlGbrjhBsOxbds20062Ihums61IhXUIIGAXgauaNZX6rqHkXtq8RU66Zi7Mdj2iXLWxya7hNv/UuaNcEGajGNjFnXzYR6DEdQdCxxrV4clICISbgM9g9uGHH5Zzzz1XmjZtaiZG2Lp1q9SpUyfcDCgPAghEgMD5GfVdTQnqyrq9+2R9SaF06dBOujbIkETX8GwkBMJVQIfPfPnll2XBggVmGE0dnahr165yyy23mE7c4VpuyhVZAj6D2dNPP11+97vfyS9/+UszksEf//hH0YHyy6Zu3bp5anDLvsdrBBBAwC4CGrh2rVNb4l0/yjvWTiOQtcuFIR9BEdBa2OHDh8uBAwdEO3HrZCk6EpF25L7++utl2rRpMnCgq+kJCQGHC/gMZl9//XV57LHH5McffxSdAm3Dhg0VzviUnp7ucAayjwACCCCAQPgI6GxXGrAeOnRI3J223aXT4TV1RqgHH3zQTITUuXNn91s8I+BIAZ/B7Pz582Xq1KlmtAKtfdXXaWlpjiwomUYAAQQQQCBSBDZu3Ci7d++W+vXrV1hkbW6gs0G98cYbMmnSpAq3YSUCThHwOWnCQw89JD/99JMpi3YA0196JAQQQAABBBCwt8CmTZvMNPS+cpmammrGjfe1De8h4AQBnzWztJl1wiX0P4/aVER/kOgv8sqS9nitarakyvZlPQIIIICAPQQKXSN26Pe5r6Tf9QUFBb424T0EHCHgM5ilzawjrqFfmdQg9r777jOjUWhHPu+Uk5Mjs2fPliVLlkhWVpb06NFDxo8fb6Yt9t6OZQQQQAABZwjo1PMVddj2zv3JkyeF9rLeIiw7VcBnMNu+fXsT5GjhNMChzawzL3N+fr7ptbpy5UoZPHhwuULMnDlTVqxYIffcc4/ExsbKs88+K6NHjzbDuYRjLe2RnJ3y056lsnrTCtlb1EpOLzlHmrum/IyOYoimch8OViAQRIHc3FzRJmxWpSNHjsjevXslJSXFqlNKfHy8tGrVyrLzuU+kd1Z1BAMts3b4qijt2LFDJkyYUNFbrEPAUQI+g1nvkqxdu1b0V9ybb75pRje4+eabTePynj1dQUC0z6a33odh2WIBHYJFG/cfPHiwwjGCN2/eLPPmzZNHH31UevXqZXI3ceJEue6662TVqlXSp08fi3Mc3NMt++mvsmbLG5JXkCt7D5yUA7JSvj/0D9fc9HXk9vPnuwJav/9JBDejHB2BCBDQH8sa7FmVdOp1fViZfDXrCmY+atWqZb77r732WjMakQa27qRNzvbv3y+jRo2S888/372aZwQcK+D3X24dluvCCy80v2r1lvWQIUPMLzq9La3BUKNGjRyLEM4Z/9e//mV6s+qoFBqklk2rV682bWj79u3reSszM1OaN29uamvDKZj94qdX5PMfpkvd5GYSH5MqR+OyJCUhSVJqxcu+rB/ktS9ulWv6TpfYmPJjKXtwWEAAgRoT0Nvgoai1rLEC2PxAWjv7/vvvy9133y27du2S7Oxs0ba06q7T1d922202LwHZQ8A/Ab+DWf3g9+vXT2bMmGGaHOjhZ82aJZdffrkZ2mPMmDH+nZGtLBXQ61a3bt1Kz6lfcDqrW9naAx07+PDhw6X201tS2lTBnXr37i0ZGRnul7Z+Pp67X5a4AtmU+IZSVFjs6ghX4noudNVYFLq+3KMlPbm17M36UdZueU86N7nY1mWpiczpXRa9xavtpSMtaZkjtex6rfXaa41oJF77SPusa3m1icFf//pX+fnnn2XZsmXSrFkzM/OXjmQQSZ8B/dzrI5LK7P686/ed+ztPh2NzYtIWAHq3obLkVzCrF19vOWsnIe9xZvV2jd6m0DaXBLOVEYd2va9AVnN24sQJ0S+1sknXaVsr7/Ttt9/KAw884Fn15JNPepomeFbadOGnA0ulpDhKiotKpFgK/xvMum61aS2FBrMmFUfL19sXSLPkc2xaiprLls7Rrl9uemcl0pJ+n2kNlZY9Entya9n1NnMkXvtI+6x7l1crKLQWvEmTJmZUm0i7/jqtr/vfvbdLJCzrd72WXQ2cOsSqVrgFHMxqpyCNijXwKZvWr19Pm9myKA567b62ZbNc0ZAt2nlMpzZ2p8r2db9vp+efs/NN5zZ3716tmdW2evHxCa5bbv9tsxfrCmYLo45GRJMZ9y/1SGwepN9j+kNNy66zIEVa0rJruSPx2kfatS5bXp1EQWcDKzsjWNntwvG1/nDVYCgSP/f6fa8zwWkFZEWVV+Fwvf2qmdU/+oMGDTK1r9r2UpPWbsyZM0emT59uhnwKB4xILIN2CtBaurJJ1+k83t5Jf9C4g0Hv9U5YTk6o57q1Kp4xdHVZV2jQrg9NxSWFkhif4XltVobpf9zldpc9TItZYbG8yx7p5a8QiJVhK+D92Q/bQlZSMMpe+u9dJUyOXe33MATalEADWG0nuWXLFhkwYIAMHz7c9IQcOXKkYwEiPeN66+no0aPmtqO3hbaX1dtR4ZKa1u0qMdHxUuL6X2UptyBL2jeiZ29lPqxHAAEEEEDAjgJ+B7Ma2GjnHx1Y/6WXXjLtZHW4Lp3X2akNiu14QazOkw7Hpbcg9Fq6k96K0rEfddi1cEkZqa1NoLova2OFRTp2cp9rWK446db8kgrfZyUCCCCAAAII2FPAr2YG7qxrg/HvvvvOjDOr7U727dsnOiC/leMEuvPCc80IaIcAnRBj2rRpZkzCxMREmTJlinTp0kX69+9fMyexyVEu6vpHOZqzQ7YeXC0JsWlSWJQvea6RDSSvWGonNpZrz/qLq5lBxYOL26QIZAMBBBBAIAwEdJxfq5JWWOnd1gMHDpgRHaw6r452ZFVTLr+D2W+++ca0m9UAtmvXrgZlz549Zkapf/7znz57mVkFx3lOTUBngHnwwQdNsxGtZdfg9t5777XsQ3hqua7+XlFR0TK830zZcmCFfLNjoZzYvU4a1W4sPdoNkk5NLpBaceVHdaj+WdgDAQQQQAAB3wI6LGZJSeXN3nzvXb13dQQD7fymncC0WaFVSZsxWnXn3u9g9tZbbzXjzD7//PNmnDq9COvWrZPLLrtMnnvuORk/frxVPpznFAV0jOCKkv560o58+iHXTl7ew69VtL3T17XK6Cct0/tIs5K1kumaIEL/wZEQQAABBBCwSkArjUg1J+BXm1nt+LVmzRoz5akOuKxJq471YowdO1YWLVpUczniSCET0MkTwj2QDRkuJ0YAAQQQQACBoAj4FcxqbZ3WxGpQWzbpmI068DwJAQQQQAABBBBAAAGrBfwKZrWthXYG0qYEq1evNoGtNijWOZ+149DAgQOtzjfnQwABBBBAAAEEEEBA/Apm1UmH49LOXzrOrM4ioYPtX3TRRWY607vvvhtKBBBAAAEEEEAAAQQsF/C7A1jbtm3lq6++kk8++UQ2btxoesZ1795dzj77bMszzQkRQODUBDZs2CDz5s2TZcuWiU7v2KdPH7nkkkvMj9RTOyJ7IYAAAgggEFoBv4NZzaZOZXrxxRebR2izzdkRQKC6AvpDdOLEiaaZkA6XosO1fP755zJ37lz5/e9/L6NGjaruIdkeAQQQQACBkAtU2cygqKhIJk+eLNu3by+VWW1icN9991XYKazUhrxAAIGQC3z55Zdy5513SmpqqhmKTCc6iYuLk7p160q7du3khRdekHfeeSfk+SQDCCCAAAIIVFfAZzC7c+dOM7bsI488YtrLeh9c/whOnTpVBgwYYKZD9X6PZQQQsJeABquNGzc2AWzZnOkwe61bt5a//vWvZka/su/zGgEEEEAAATsL+AxmdWaokydPmilszzzzzFLleP3112XlypXy7bffmgH3S73JCwQQsI2AToaxbds2UytbWaa0ljYvL082b95c2SasRwABBBBAwJYCPoPZDz/8UG655RZp1apVhZnXkQ1+/etfi25HQgABewroD1J/58euaCxpe5aKXCGAAAIIIPBfAZ/BrE6I0KVLF59W5513nqVz/frMDG8igEA5Afd0vdrhy1fSiVEaNGjgaxPeQwABBBBAwHYCPkczOOuss+Szzz4z7WIry7l2LGF4rsp0wnt9fn6+Gd7JiaXUwE5rLPUHm04KEu5J/41+/PHHUr9+fVNUnbVPDdyz9x0+fFjatGljxo9Wk3BOWj73tdcAPtKSu/Y93K9zpF1Xf8rr/txH4rXXz70+IrHs/nw27L6NzkSbmJhYaTZ9BrPnn3++aQ97/fXXmz90ZY+yZMkSeffdd+W1114r+xavI0BAP1yxsT4/QrZV0EBOh6fS/Du1DNXB/d3vfifLly+XrKwsqVOnjml2oE0P9HHs2DHzJa8dPSPBQssYSde+7OfEu/xl3+N1eAtE8uc+ksseDp/qqprK+YxEdNzJL774Qnr27Cn33HOP9OjRw8z+9eOPP8qaNWvkz3/+s1x77bVywQUXhIMVZaimgP5RdGrwo8GsDk+lYyfrI9xTixYt5L333pMrrrjCBK/Hjx8XHXZPHXQ2vxkzZlTaNj7cbLQ2OpKufdnrF8llL2sRaa8j+drr97x2co2E7/tI+1xreX0Gs/rB17Enx40bJ7NmzZIHH3zQGGmNnI5N+fTTT8tdd90ViW6UGQHHCaSlpcm///1v+frrr2XFihXmi/2cc86Rbt26SVJSkuPKQ4YRQMC5Arm5uaI/qq1Khw4dMuc7cOCAVac0gbN+75KCL+AzmNXTa83bs88+ax779++XrVu3SqdOnSQlJSX4ueMMCCBQowL6A1WH2cvIyDDjQ3fo0KFGj8/BEEAAAX8EsrOzy03G5M9+p7qN1spqKjsB1Kkez5/9dDx+gll/pALfpspg1vsU2tOZ3s7eIiwjgAACCCCAQHUFtDOqu0NqdfdlewTKCvgcmqvsxrxGAAEEEEAAAQQQQMBOAgSzdroa5AUBBBBAAAEEEECgWgIEs9XiYmMEEEAAAQQQQAABOwkQzNrpapAXBBBAAAEEEEAAgWoJEMxWi4uNEUAAAQQQQAABBOwkQDBrp6tBXhBAAAEEEEAAAQSqJVCtobmqdWQ2RqCaAjqGcUFBQTX3OrXNdearHTt2mBmwDh8+fGoHOYW9dCYuZqA5BTh2QQABBBBAoBIBgtlKYFhtvYDOLKcPK5Kep0uXLlacinMggAACCCCAQBAFCGaDiOvEQ5eUlEhUVFRIsq61liQEEEAAAQQQQKA6AgSz1dEK021zcnJk9uzZsmTJEsnKypIePXrI+PHjpXbt2mFaYoqFAAIIIIAAAuEiYM093XDRCtNyzJw5UxYvXizjxo2Txx9/XHbv3i2jR48WraUlIYAAAggggAACdhYgmLXz1bEgb5s3b5Z58+bJnXfeKb169ZLu3bvLxIkTZdOmTbJq1SoLcsApEEAAAQQQQACBUxegmcGp24XFnqtXr5a4uDjp27evpzyZmZnSvHlzWbFihfTp08ezngUEEKh5gb1798rx48dr/sCVHHHbtm2SmJgo+fn5lWxR86szMjKkTp06NX9gjogAAgi4BAhmI/xjsGvXLvNHRgNa75Seni5lh6w6duyYGc7KvV3Tpk0lOTnZ/ZJnBwnoEGjuh4OyXSNZ1XIXFhbapvxFRUVmiLgaKZwfB2nVqpXZSoensyq5va06H+epWMD9b16fSQg4SUA7psfGVh6yVv6Ok0pJXk9Z4MSJE5Kamlpuf1135MiRUuuXLVsmY8aM8ax78sknTdMEzwoWHCOg1zY3N1cOHjzomDzXVEa1w+PRo0dN2ZOSkmrqsKd8HB0mLi0t7ZT3d8KOGjxF4mfNbtdGP/f6mbdqCES7lZ/8OFdAK9zq169faQEIZiuliYw39JdORV9s+iuo7K/3fv36yZtvvumBadmypaSkpHhes+AcAb2trcGs1sDbIR06dMjybFg9BJ1drC2H5oS2EdCmHnXr1rXNv3vbwJAR2wtU9X1NMGv7SxjcDNarV6/C9noa7JRtQqBfgvogOV8gPj7e3NrW51Anvd2tI2hYlfS2vpZbawpjYmKsOq00atQoZGM4W1ZITmRrAa3d0s++Hf7d2xqKzDlOgGDWcZesZjOstUV660n/wHv/Ydf2sjreLAmBYAvonYFI+KxVVbMQbGeOjwACCISrAENzheuV9bNcOhyX3m5eu3atZw+tJdMezz179vSsYwGBYApoQBvuj2D6cWwEEEAgkgUIZiP56rvKrj2btVZs2rRpsn37djlw4IBMmTJFunTpIv37949wHYqPAAIIIIAAAnYXIJi1+xWyIH8TJkww7WOHDx8uV155pakhu/fee2nfZ4E9p0AAAQQQQACBwARoMxuYX1jsrQOaT58+3bSd1Vu94T5MUFhcNAqBAAIIIIAAAkaAYJYPgkeAGXo8FCwggAACCCCAgEMEaGbgkAtFNhFAAAEEEEAAAQTKCxDMljdhDQIIIIAAAggggIBDBAhmHXKhyCYCCCCAAAIIIIBAeQGC2fImrEEAAQQQQAABBBBwiADBrEMuFNlEAAEEEEAAAQQQKC9AMFvehDUIIIAAAggggAACDhEgmHXIhSKbCCCAAAIIIIAAAuUFCGbLm7AGAQQQQAABBBBAwCECBLMOuVBkEwEEEEAAAQQQQKC8AMFseRPWIIAAAggggAACCDhEgOlsHXKh7JjNoqIiKSwstGPWyFMVAnl5eZKfny/6TEIAgcgQcP+b5999ZFzvcCpldHS0xMXFVVokgtlKaXijKgENZgsKCqrajPdtKKA/QvTacf1seHHIEgJBEtB/9+5/+0E6BYdFICgCBLNBYeWgKhAfH28eaDhPIDk5WWJiYiQlJcV5mSfHCISJgNaQlpSUWFYa/Tevj9hY6+qx9O+EBiIkBIIpYN0nOpil4NgIIIAAAgg4TODnn3+WnJwcy3J99OhR0TtqBw4csOyc7dq1k9TUVMvOx4kiU4BgNjKvO6VGAAEEEAixQMuWLaW4uNiyXLRv396yc7lPlJiY6F7kGYGgCRDMBo2WAyOAAAIIIFC5QFJSUuVv8g4CCPgtQEMWv6nYEAEEEEAAAQQQQMBuAgSzdrsi5AcBBBBAAAEEEEDAbwGaGfhNxYYIBE/gxIkTcvz48eCdoMyRtQNIbm6u1KlTp8w7wXupt1TT0tKCdwKOjAACCCAQkQIEsxF52Sm03QQ0mN27d69l2dLhgHQAaivPmZ6eTjBr2RXmRAgggEDkCES5/qhZN8hd5LhSUgQQQAABBBBAAAELBGgzawEyp0AAAQQQQAABBBAIjgDBbHBcOSoCCCCAAAIIIICABQIEsxYgcwoEEEAAAQQQQACB4AgQzAbHlaMigAACCCCAAAIIWCBAMGsBMqdAAAEEEEAAAQQQCI4AwWxwXDkqAggggAACCCCAgAUCBLMWIHMKBBBAAAEEEEAAgeAIEMwGx5WjIoAAAggggAACCFggQDBrATKnQAABBBBAAAEEEAiOAMFscFw5KgIIIIAAAggggIAFAgSzFiBzCgQQQAABBBBAAIHgCBDMBseVoyKAAAIIIIAAAgiCKtbvAAAbH0lEQVRYIEAwawEyp0AAAQQQQAABBBAIjgDBbHBcOSoCCCCAAAIIIICABQIEsxYgcwoEEEAAAQQQQACB4AgQzAbHlaMigAACCCCAAAIIWCBAMGsBMqdAAAEEEEAAAQQQCI4AwWxwXDkqAggggAACCCCAgAUCBLMWIHMKBBBAAAEEEEAAgeAIEMwGx5WjIoAAAggggAACCFggQDBrATKnQAABBBBAAAEEEAiOAMFscFw5KgIIIIAAAggggIAFAgSzFiBzCgQQQAABBBBAAIHgCBDMBseVoyKAAAIIIIAAAghYIEAwawEyp0AAAQQQQAABBBAIjgDBbHBcOSoCCCCAAAIIIICABQIEsxYgcwoEEEAAAQQQQACB4AgQzAbHlaMigAACCCCAAAIIWCBAMGsBMqdAAAEEEEAAAQQQCI4AwWxwXDkqAggggAACCCCAgAUCBLMWIHMKBBBAAAEEEEAAgeAIEMwGx5WjIoAAAggggAACCFggQDBrATKnQAABBBBAAAEEEAiOAMFscFw5KgIIIIAAAggggIAFAgSzFiBzCgQQQAABBBBAAIHgCBDMBseVoyKAAAIIIIAAAghYIEAwawEyp0AAAQQQQAABBBAIjgDBbHBcOSoCCCCAAAIIIICABQIEsxYgcwoEEEAAAQQQQACB4AgQzAbHlaMigAACCCCAAAIIWCBAMGsBMqdAAAEEEEAAAQQQCI4AwWxwXDkqAggggAACCCCAgAUCBLMWIHMKBBBAAAEEEEAAgeAIEMwGx5WjIoAAAggggAACCFggQDBrATKnQAABBBBAAAEEEAiOAMFscFw5KgIIIIAAAggggIAFAgSzFiBzCgQQQAABBBBAAIHgCBDMBseVoyKAAAIIIIAAAghYIEAwawEyp0AAAQQQQAABBBAIjgDBbHBcOSoCCCCAAAIIIICABQIEsxYgcwoEEEAAAQQQQACB4AgQzAbHlaMigAACCCCAAAIIWCBAMGsBMqdAAAEEEEAAAQQQCI4AwWxwXDkqAggggAACCCCAgAUCBLMWIHMKBBBAAAEEEEAAgeAIEMwGx5WjIoAAAggggAACCFggEGvBOTgFAqcsMHHixFPeN9Q7Bpr3QPen/KETCPTaBbp/6Er+3zMHmv9A9w9l+QPNe6D7h7Lseu5A8h/IvqEud6Blr4n9Q2kQ6mtHzWworz7nRgABBBBAAAEEEAhIgGA2ID52RgABBBBAAAEEEAilgCXB7Pz58+W8886TQYMGmcfFF18s999/v2zdutVT9quuuko2bdrkeR3qha+//lpuuummKrPhvd306dPlL3/5S5X7BGuDUJ8/WOXiuAgggAACCCCAQGUClrWZ7dmzpzzzzDMmHydPnpS3335bxo0bZ4K/unXryosvvih16tSpLJ+OWH/ttddKVFRUyPIa6vOHrOCcGAEEEEAAAQQiVsCyYNZbODExUW644QZZvHixfPLJJ3LllVfKpEmTZOzYsdKiRQt5//335bXXXpP9+/dL8+bN5Z577pGOHTvKnDlzzGGWLVsmO3bsEK3NPe200+S5554zgfDIkSPl9NNPl+LiYtHa4H/9619y5MgRGTp0qNx4440SHR0to0aNkgsuuEBmz54tubm5Jh+XXXaZOe6SJUvkb3/7m+Tk5JiaZO88ey9Xtt2CBQvMOTRfep5f/vKX8uqrr0pcXJz84Q9/MOX96KOP5IwzzpB7771XkpKSTP6eeOIJ+c9//iONGjWS0aNHS/fu3WXz5s3yxhtvSGpqqnz44YfSoEEDeeCBB6RNmzayfft2efTRR2XLli3SrFkz46bl9j7/gQMH5K233jK+tWvXFrXR857Kcb3LzjICCCCAAAIIIGAnAUuaGVRW4Hbt2pmgVN/fvXu35Ofnm9dPP/20PPTQQzJv3jzp0KGD59b90aNHTZB7xx13mOBXb+nPnTtXdPtzzjlH3nnnHXOqf/7zn6IPDYIfeeQR+fjjj02gp2/u2rXLvJ46daoJKJ9//nnJzs4259d1N998s0yZMkW++uorc6yy/9F8VradBs5ZWVlmFz2PBusvvPCCnHXWWSZI1SD+lVdeMUH66tWrzXaTJ0+WlJQUef31101Q//jjj5v1aqGBrwazf//7302QPnPmTPOePp999tkmWL/oootM+fUN7/P/6U9/kmPHjhm7yy+/3ATTBw8eNMbVPa45Kf9BAAEEEEAAAQRsKBDSYDY9Pd0EXN4u9erVEw3WNNDVW/aZmZly6NAhzyYaxHXu3Fm6desmGRkZMnjwYFM7qQHj999/b7bT4HXIkCHSqVMn6dKli1x44YWmdtN9kGuuuUZatmxpAkINJDXI0+CyVatWcu6550rr1q1Fg8SKkr/b6b5XXHGFqVE9//zzpaioSPS89evXlx49esj69etN2VesWGHW16pVS/r37y9q4m47nJycbNrt6j5ay7tnzx6TpZiYGPnhhx9MDa3WKruDXHd+tUZb2/Lecsstxkhrpps2bSqff/652eRUj+s+Ps8IIIAAAggggIBdBEIazGrQpQGpd9Jb759++qkJ8IYPH25qN7XZgDtpYOdOCQkJplmCvtZb+Rowatq7d68JeM0L13/0FrwGrO6kbXTdSYPIwsJC2blzp7Rv39692gTCnhdeC/5up7u486r51GUtm6bY2FiTVy2/BuzaJEEDXX1oje53331ntvPOp9bqust31113mTxrsKrtZBctWmS2d/9Hy6/NErxt9QeA2+BUj+s+Ps8IIIAAAggggIBdBELSZlYLn5eXJ2vWrDHtPb0xPvjgAxPAahtabQ+r7WNnzJjh2UTbvVaVtCOZjpSgAZwmbSfapEkTz24VddJq2LChaC2pO7lrQd2v3c/+bqfbaw2qr6S1w1pLqu133Z3ftKmA1ha7a2cr2l+Pq21mtW2vti9Wqz59+ng21WNp4Hr8+HHTTEHf+Pnnn00NtWejChYqO662uSUhgAACCCCAAAJ2FKg6MqyhXGvtp7bh1GBNb5FrMKZBmzYb8E66jXZq0kC2pKREFi5caGohvbeparl3796m45O2hdXjffbZZ6a5ga/9tNOV3vrXzlUaaJet7XTv6+927u19PWttcq9evUzbYK191uYU1113nWzbts3XbsZOO7elpaWZoc70OGrlTtqkoHHjxvLvf//brP/pp5+MuTu4d29X9lmvia/jlt2e1wgggAACCCCAQKgFLKuZXbdunej4spq05lCDwqeeeqpc7eXAgQNNxycdfUADYB2bVmtwdeQBf5MGhNrxS0cV0NrGM8880wSJvvbXUQL0tv3tt98u8fHx0rVr1wo393e7CneuYKU2E9DObjoSgeb16quvNiMWbNiwoYKt/7tK86kdxbTzm/44GDFihKdmV7fQ4+jIB9oJTLfRzmQ6UoT+QAjkuJVmiDcQQAABBBBAAIEQCUS5avT+v0ovRJmo6LQ6KoD25PenWUFF++u6EydOmPap2mbV36QBtAZ/7vatle3n73aV7V92vQalGuRX1ASi7Lbu19qMQNvSahvcylKwjlvZ+Wp6fajnew6kPIHmPdD9A8l7TewbaP4D3b8mynCqxwg074Huf6r5rqn9As1/oPvXVDlO5TiB5j3Q/U8lzzW5TyD5D2TfmizDqR4r0PwHuv+p5rsm9gt13iuPgmqidAEcoybaaWp71OomDQx9BYfu4/m7nXv7qp69O2VVta37fQ32q0rBOm5V5+V9BBBAAAEEEEDACgHb1sxaUXjOgQACCCCAAAIIIOBsAcs6gDmbidwjgAACCCCAAAII2FGAYNaOV4U8IYAAAggggAACCPglQDDrFxMbIYAAAggggAACCNhRgGDWjleFPCGAAAIIIIAAAgj4JWDb0Qz8yj0bIRDGAqEe6iRQWqfnP9DyB7K/0+2cnv9Arl2g+zrdzun5D/T6BbK/k+1CnXdqZgP55LEvAggggAACCCCAQEgFCGZDys/JEUAAAQQQQAABBAIRIJgNRM+ifefPny/nnXeemdpXp/fVaYHvv/9+2bp1a0A52L9/v5nuVg+i09xec801AR2PnRFAAAEEEEAAAasFCGatFj/F8/Xs2VM++ugj85g7d660b99exo0bJzpd7ammr7/+WlavXn2qu7MfAggggAACCCAQcgGC2ZBfgupnIDExUW644QbR6Ww/+eQTcwANarW2dvDgwXLjjTfKunXrzPrNmzeLNsx+9NFHZciQIXLfffeZAPjgwYPywgsvyNq1a+Xhhx822xYVFckzzzwjF110kdx8882yffv26meOPRBAAAEEEEAAAQsFCGYtxK7pU7Vr10527NhhDjt58mRJSUmR119/Xa688kp5/PHHzfr8/Hz59NNPpV69eua99PR0mTJlink9YsQI6dKli6nh1Y13795t1r/66quSmZkpL730kjkG/0EAAQQQQAABBOwqQDBr1yvjR740MD127Jh5rFixwrR5rVWrlvTv31/0vU2bNpmjxMTEmJrctLQ0ufrqq0W3LSwsFN02NjZWkpKSzHbuGl/dV2tnd+7c6Ucu2AQBBBBAAAEEEAidAOPMhs4+4DNrB66MjAzR56ioKBk1alSpY3733Xemba3WsroD1mbNmklCQoLs3bu31Lb6on79+p51WsurtbokBBBAAAEEEEDAzgIEs3a+Oj7ylpeXJ2vWrJGxY8dKy5YtJTk5WWbPni116tQxe2kbWg1ItXZ2z549ou1htYZ23759ovs2bNhQfvjhBx9n4C0EEEAAAQQQQMD+AjQzsP81MjnUZgHapECDVA1CtUOXBqtnn322xMXFSa9evWTevHlSXFwshw4dkuuuu062bdtm9s3JyZGlS5dKSUmJLFy40LST1dpZbVaQnZ3tEAGyiQACCCCAAAIIlBegZra8iS3X6OgEOr6sJq197d69uzz11FOmtlXXXXvttfLQQw/JggULzDptG9umTRszfmzdunXllVdekWnTppkA+IknntBdpHXr1masWh39YPz48WYd/0EAAQQQQAABBJwkQDDrgKs1bNgw0YevpCMbvPHGG6bmVoNdbUPrTlqDq00QtGZXO4G5U+PGjeVf//qXFBQUmHa0c+bMcb8lerw333zT85oFBBBAAAEEEEDAjgIEs3a8KgHkSWthK0vegax7m+joaBPIul/zjAACCCCAAAIIOEkgytWOssRJGSav1RM4evSomUBBh+siIYAAAggggAAC4SZAMBtuV5TyIIAAAggggAACESTAaAYRdLEpKgIIIIAAAgggEG4CBLPhdkUpDwIIIIAAAgggEEECBLMRdLEpKgIIIIAAAgggEG4CjGYQbleU8iAQJgITJ050bEkCzXug+4cazun5D7VfpJ7f6Z+bQPMf6P6h/NyEOu/UzIby6nNuBBBAAAEEEEAAgYAECGYD4mNnBBBAAAEEEEAAgVAKEMxWQ/+DDz6QQYMGmceAAQNEx251v37vvfd8Hunyyy+Xn3/+udw233zzjdxwww3l1ge6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" /><!-- --></p>
 <p>What if we want (average) marginal effects? Oh, and what if we want 99% CIs rather than 95% CIs? We can simply modify our estimation function accordingly. We’ll pass in a new <code>get_mfx</code> argument through the <code>...</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(margins)
@@ -578,27 +1562,12 @@ starb_logit_enhanced =<span class="st"> </span><span class="cf">function</span>(
                <span class="dt">perm =</span> perm_controls,
                <span class="dt">base =</span> base_controls,
                <span class="dt">fe_always =</span> F,
-               <span class="dt">run_from =</span> <span class="dv">3</span>)
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span></code></pre></div>
+               <span class="dt">run_from =</span> <span class="dv">3</span>)</code></pre></div>
 <p><img src="data:image/png;base64,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tUyZMkUyMzNNPm644QZz3iVLlsh7770nZ86cMS3J7nl2f1zcfvPmzTPX0Hzpda644gr54IMPJCYmRh577DFT3q+++ko6d+4sf/zjHyUhIcHk75VXXpHVq1dLrVq15KGHHpKOHTvKjh07ZMaMGVKpUiVZsGCB1KxZU/70pz9J06ZNZffu3fL888/Lf/7zH6lXr55x03K7X//w4cPy8ccfG9/KlSuL2uh1z+e87mXnMQIIIIAAAgggYCWBgHQzKK7AzZs3N0Gpvr5//37Jzs42z19//XV56qmnZNasWdKyZUvXT/fHjx83Qe4f/vAHE/zqT/qffvqp6P6XXXaZzJw501xq9uzZojcNgp977jn5+uuvTaCnL+7bt888f/nll01A+ec//1kyMjLM9XXb8OHDZfz48fLTTz+ZcxX+n+azuP00cD5x4oQ5RK+jwfpf//pXueSSS0yQqkH8+++/b4L0lStXmv1eeuklqVixokybNs0E9S+++KLZrhYa+GowO3XqVBOkT5o0ybym95deeqkJ1q+55hpTfn3B/frPPPOMnDx50tgNGjTIBNNHjhwxxqU9r7ko/0MAAQQQQAABBCwoENRgtlq1aibgcnepWrWqaLCmga7+ZJ+amipHjx517aJBXJs2baRDhw5So0YN6dOnj2md1IBx8+bNZj8NXvv16yetW7eWdu3aSd++fU3rpvMkgwcPloYNG5qAUANJDfI0uGzUqJF0795dmjRpIhokekq+7qfH3njjjaZFtVevXpKbmyt63erVq0unTp1k06ZNpuzLly832ytUqCA9evQQNXH2HU5MTDT9dvUYbeU9cOCAyVJUVJT8/PPPpoVWW5WdQa4zv9qirX1577nnHmOkLdN169aVf//732aX8z2v8/zcI4AAAggggAACVhEIajCrQZcGpO5Jf3r/5ptvTIA3ZMgQ07qp3QacSQM7Z4qLizPdEvS5/pSvAaOmgwcPmoDXPHH8T3+C14DVmbSPrjNpEJmTkyN79+6VFi1aODebQNj1xO2Br/vpIc68aj71sZZNU3R0tMmrll8Ddu2SoIGu3rRFd+PGjWY/93xqq66zfA8++KDJswar2k/222+/Nfs7/6fl124J7rb6BcBpcL7ndZ6fewQQQAABBBBAwCoCQekzq4XPysqSVatWmf6e7hhffvmlCWC1D632h9X+se+++65rF+33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IIAAAmEkwGwGYVTZFBUBBBBAAAEEEAg1AYLZUKtRyoMAAggggAACCISRAMFsGFU2RUUAAQQQQAABBEJNgNkMQq1GKQ8CISLw9NNP27Yk/ubd3+ODDWf3/AfbL1yvb/f3jb/59/f4YL5vgp13WmaDWftcGwEEEEAAAQQQQMAvAYJZv/g4GAEEEEAAAQQQQCCYAgSzpdD/8ssv5aqrrjK3nj17is7d6nz+2WefeT3ToEGD5Ndffy2yz/r16+Wuu+4qst3fDTfffLNs3769yGnWrVsnd999t9melpYmn376qXm8ZcsWGTx4cJH92YAAAggggAACCFhZgD6zpaidPn36iN40/fnPfzbLwI4aNaoUZwjcrm+//bbosrbekga2K1eulBtvvNHbbryGAAIIIIAAAghYVoCW2TKsmszMTHnllVdkwIABcs0118jYsWPlzJkzrit88cUX5rXbbrtNvvvuO9d25wNdjG3KlCkycOBAs58+LrxA2+7du+WBBx5wHiIatP71r391Pf/DH/4gR44ckXHjxsn+/fvN9iVLlsidd95pgtZ///vfZpvuo8etWbNGnn32WbMtNzdX3njjDZP34cOHi16LhAACCCCAAAIIWFmAYLYMa2fmzJkmgHz//fflnXfekR07dsg333zjuoJ2KdAW3d/+9rfy1FNPSXp6uus1fbBgwQJzGz9+vLz44ouycOFC2bx5c4F96tevL7t27ZIDBw6Y7UuXLhVngLpnzx45evSoVK9e3eQjOzvb3L/88suiwame96effjLHVa1aVYYNGybt2rWTRx55xGzT4Fe3f/DBB5KammrKUODiPEEAAQQQQAABBCwmQDBbhhXSu3dveeKJJyQ5OVliY2OlXr16cuzYMdcVbrjhBtFgVPvZ1q5dW77//nvXa/pAW26vvfZaqVu3rjRo0MA8LrxPRESEdOnSRdauXSva57VSpUqiLaoaxK5atUouvvjiAufUbgSNGjWS7t27S5MmTUyrq+4QGRkpFSpUkOjoaElISDDHxMfHm/671apVM/vt3bu3wLl4ggACCCCAAAIIWE2APrNlWCMaIE6YMMH8dK/9VTXIbNmypesKbdq0cT3W7fpTvwa3znT48GGZPn26fPLJJ85N0rx5c9dj54OLLrpIVq9eLVFRUdK+fXsTyG7YsMH0f+3fv79zN3OvAWmLFi1c21q3bi06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" /><!-- --></p>
 </div>
 <div id="manual-ggplot2-plotting" class="section level2">
 <h2>Manual ggplot2 plotting</h2>
-<p> gives some options for customizing the plot, but it can be desirable to plot from scratch for added flexibility. Let’s try that below:</p>
+<p><code>starbility</code> gives some options for customizing the plot, but it can be desirable to plot from scratch for added flexibility. Let’s try that below:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dfs =<span class="st"> </span><span class="kw">stability_plot</span>(<span class="dt">grid =</span> grid1,
                <span class="dt">data =</span> diamonds, 
                <span class="dt">lhs =</span> lhs_var, 
@@ -610,21 +1579,6 @@ starb_logit_enhanced =<span class="st"> </span><span class="cf">function</span>(
                <span class="dt">fe_always =</span> F,
                <span class="dt">run_from =</span> <span class="dv">3</span>,
                <span class="dt">run_to =</span> <span class="dv">5</span>)
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
-
-<span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span>
 
 coef_grid =<span class="st"> </span>dfs[[<span class="dv">1</span>]]
 control_grid =<span class="st"> </span>dfs[[<span class="dv">2</span>]]

@@ -11,18 +11,21 @@ vignette: >
 library(lemon)
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  warning = F,
+  message = F
 )
 
 knit_print.data.frame <- lemon_print
 
 ```
 
-This vignette is designed for users who would like greater control over the default functions in \code{starbility}. If you have not yet done so, please first review the [main vignette](https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility.html).
+This vignette is designed for users who would like greater control over the default functions in `starbility`. If you have not yet done so, please first review the [main vignette](https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility.html).
 
 This vignette will cover three topics:
-1. An overview of the \code{starbility} pipeline
-2. Estimating models that are not automatically supported in \code{starbility}. (Currently, the only function automatically supported is `felm`)
+
+1. An overview of the `starbility` pipeline
+2. Estimating models that are not automatically supported in `starbility`. (Currently, the only function automatically supported is `felm`)
 3. Manual `ggplot2` plotting
 
 As in the main vignette, we will use the `diamonds` dataset included in ``ggplot2`.
@@ -37,9 +40,9 @@ indices = sample(1:nrow(diamonds), replace=F, size=round(nrow(diamonds)/20))
 diamonds = diamonds[indices,]
 ```
 
-## Overview of \code{starbility} pipeline
+## Overview of `starbility` pipeline
 
-\code{starbility} proceeds in six discrete steps, corresponding to six discrete functions: `create_grid`, `create_felm_formulas`, `create_model_estimates`, `create_plot_dfs`, `draw_panels`, and `combine_plots`. `stability_plot` wraps all of these steps for convenience, but we can also access each function individually. Alternatively, we can use the `run_to` argument in `stability_plot` to end execution before a given step and the `run_from` argument to begin execution at a given step. The typical use case is to skip a step and implement it ourselves if we desire more flexibility or an option not yet automatically implemented. 
+`starbility` proceeds in six discrete steps, corresponding to six discrete functions: `create_grid`, `create_felm_formulas`, `create_model_estimates`, `create_plot_dfs`, `draw_panels`, and `combine_plots`. `stability_plot` wraps all of these steps for convenience, but we can also access each function individually. Alternatively, we can use the `run_to` argument in `stability_plot` to end execution before a given step and the `run_from` argument to begin execution at a given step. The typical use case is to skip a step and implement it ourselves if we desire more flexibility or an option not yet automatically implemented. 
 
 ### Step 1: control grid
 
@@ -75,8 +78,8 @@ grid1 = stability_plot(data = diamonds,
                       nonperm_fe = nonperm_fe_controls, 
                       run_to=2)
 
-print(grid1 %>% head(10))
-print(grid1 %>% tail(10))
+knitr::kable(grid1 %>% head(10))
+knitr::kable(grid1 %>% tail(10))
 
 ```
 
@@ -95,8 +98,8 @@ grid2 = stability_plot(grid = grid1,
                       run_to=3)
 
 
-print(grid2 %>% head(10))
-print(grid2 %>% tail(10))
+knitr::kable(grid2 %>% head(10))
+knitr::kable(grid2 %>% tail(10))
 
 ```
 
@@ -114,8 +117,8 @@ grid3 = stability_plot(grid = grid2,
                       run_from=3,
                       run_to=4)
 
-print(grid3 %>% head(10))
-print(grid3 %>% tail(10))
+knitr::kable(grid3 %>% head(10))
+knitr::kable(grid3 %>% tail(10))
 
 ```
 
@@ -138,10 +141,10 @@ dfs = stability_plot(grid = grid3,
 coef_grid = dfs[[1]]
 control_grid = dfs[[2]]
 
-print(coef_grid %>% head(10))
-print(coef_grid %>% tail(10))
-print(control_grid %>% head(10))
-print(control_grid %>% tail(10))
+knitr::kable(coef_grid %>% head(10))
+knitr::kable(coef_grid %>% tail(10))
+knitr::kable(control_grid %>% head(10))
+knitr::kable(control_grid %>% tail(10))
 
 ```
 
@@ -213,14 +216,14 @@ grid1 = stability_plot(data = diamonds,
 # Complete formula with LHS and RHS variables
   grid1$expr = paste(lhs_var, '~', rhs_var, '+', grid1$expr, sep='')
   
-  print(grid1 %>% head(10))
-  print(grid1 %>% tail(10))
+  knitr::kable(grid1 %>% head(10))
+  knitr::kable(grid1 %>% tail(10))
 
 ```
 
 Our grid seems to be in order. We will also need to define a custom function for our logit model:
 
-```{r glm2, fig.width = 7.2, fig.height = 4, warnings=F}
+```{r glm2, fig.width = 7.2, fig.height = 4, warnings = F}
 starb_logit = function(spec, data, rhs, ...) {
   spec = as.formula(spec)
   model = glm(spec, data=data, family='binomial', weights=data$weight) %>%
@@ -289,7 +292,7 @@ stability_plot(grid = grid1,
 
 ## Manual ggplot2 plotting
 
-\code{starbility} gives some options for customizing the plot, but it can be desirable to plot from scratch for added flexibility. Let's try that below:
+`starbility` gives some options for customizing the plot, but it can be desirable to plot from scratch for added flexibility. Let's try that below:
 
 ```{r manualplot, fig.width = 7.2, fig.height = 4, warnings=F}
 dfs = stability_plot(grid = grid1,
