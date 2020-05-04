@@ -15,4 +15,4 @@ library(starbility)
 ## Notes and Acknowledgements 
 Comments, criticism, suggestions, pull requests, etc. are very much appreciated. Email: <arao@g.harvard.edu>. 
 
-Thanks to David Yanagizawa-Drott for suggesting the structure of the plot and to Ross Mattheis for very helpful discussions during development.
+Thanks to David Yanagizawa-Drott for suggesting the structure of the plot and to Ross Mattheis and Eric Karsten for very helpful discussions during development.
