@@ -389,6 +389,7 @@ If you're ready to move on to more advanced features, the [advanced vignette](ht
 1. The `starbility` pipeline
 2. Estimate models that are not automatically supported in `starbility`. (Currently, the only function automatically supported is `felm`)
 3. Manual `ggplot2` plotting
+4. Combine multiple models in a single plot
 
 Thanks for reading!
 

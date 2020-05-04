@@ -22,11 +22,12 @@ knit_print.data.frame <- lemon_print
 
 This vignette is designed for users who would like greater control over the default functions in `starbility`. If you have not yet done so, please first review the [main vignette](https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility.html).
 
-This vignette will cover three topics:
+This vignette will cover four topics:
 
 1. An overview of the `starbility` pipeline
 2. Estimating models that are not automatically supported in `starbility`. (Currently, the only function automatically supported is `felm`)
 3. Manual `ggplot2` plotting
+4. Combining multiple models in a single plot
 
 As in the main vignette, we will use the `diamonds` dataset included in ``ggplot2`.
 
@@ -300,19 +301,19 @@ dfs = stability_plot(grid = grid1,
                lhs = lhs_var, 
                rhs = rhs_var,
                model = starb_logit_enhanced,
-               get_mfx = F,
+               get_mfx = T,
                perm = perm_controls,
                base = base_controls,
                fe_always = F,
                run_from = 3,
                run_to = 5)
 
-coef_grid = dfs[[1]]
-control_grid = dfs[[2]]
+coef_grid_logit = dfs[[1]]
+control_grid_logit = dfs[[2]]
 
 min_space = 0.5
 
-coef_plot = ggplot2::ggplot(coef_grid, aes(x = model, y = coef, shape=p, group=p)) +
+coef_plot = ggplot2::ggplot(coef_grid_logit, aes(x = model, y = coef, shape=p, group=p)) +
   geom_linerange(aes(ymin = error_low, ymax = error_high), alpha=0.75) +
   geom_point(size=5, aes(col=p, fill=p), alpha=1) +
   viridis::scale_color_viridis(discrete = TRUE, option = "D")+
@@ -324,20 +325,20 @@ coef_plot = ggplot2::ggplot(coef_grid, aes(x = model, y = coef, shape=p, group=p
   theme(axis.text.x = element_blank(),
         axis.title = element_blank(),
         axis.ticks.x = element_blank()) +
-  coord_cartesian(xlim=c(1-min_space, max(coef_grid$model)+min_space), 
+  coord_cartesian(xlim=c(1-min_space, max(coef_grid_logit$model)+min_space), 
                   ylim=c(-0.1, 1.6)) +
   guides(fill=F, shape=F, col=F)
 
 
-control_plot = ggplot(control_grid) +
+control_plot = ggplot(control_grid_logit) +
   geom_point(aes(x = model, y = y, fill=value), shape=23, size=4) +
   scale_fill_manual(values=c('#FFFFFF', '#000000')) +
   guides(fill=F) +
-  scale_y_continuous(breaks = unique(control_grid$y), 
-                     labels = unique(control_grid$key),
-                     limits=c(min(control_grid$y)-1, max(control_grid$y)+1)) +
-  scale_x_continuous(breaks=c(1:max(control_grid$model))) +
-  coord_cartesian(xlim=c(1-min_space, max(control_grid$model)+min_space)) +
+  scale_y_continuous(breaks = unique(control_grid_logit$y), 
+                     labels = unique(control_grid_logit$key),
+                     limits=c(min(control_grid_logit$y)-1, max(control_grid_logit$y)+1)) +
+  scale_x_continuous(breaks=c(1:max(control_grid_logit$model))) +
+  coord_cartesian(xlim=c(1-min_space, max(control_grid_logit$model)+min_space)) +
   theme_classic() +
   theme(panel.grid.major.y = element_blank(),
         panel.grid.minor.y = element_blank(),
@@ -351,6 +352,84 @@ cowplot::plot_grid(coef_plot, control_plot, rel_heights=c(1,0.5),
 
 
 ```
+
+## Combining models
+
+Manual plotting also lets us combine coefficient estimates from different models. Let's try including both logit and probit (marginal effects). That also means we'll need to define a probit function first:
+
+```{r combined, fig.width = 7.2, fig.height = 4, warnings=F}
+
+starb_probit = function(spec, data, rhs, ...) {
+  # Unpack ...
+  l = list(...)
+  get_mfx = ifelse(is.null(l$get_mfx), F, T) # Set a default to F
+  
+  spec = as.formula(spec)
+  if (get_mfx) {
+    model = glm(spec, data=data, family=binomial(link='probit'), weights=data$weight) %>%
+      margins() %>%
+      summary
+    row = which(model$factor==rhs)
+    coef = model[row, 'AME'] %>% as.numeric()
+    se   = model[row, 'SE'] %>% as.numeric()
+    p    = model[row, 'p'] %>% as.numeric()
+  } else {
+    model = glm(spec, data=data, family=binomial(link='probit'), weights=data$weight) %>%
+      broom::tidy()
+    row = which(model$term==rhs)
+    coef = model[row, 'estimate'] %>% as.numeric()
+    se   = model[row, 'std.error'] %>% as.numeric()
+    p    = model[row, 'p.value'] %>% as.numeric()
+  }
+
+  z = qnorm(0.995)
+  return(c(coef, p, coef+z*se, coef-z*se))
+}
+
+probit_dfs = stability_plot(grid = grid1,
+  data = diamonds, 
+               lhs = lhs_var, 
+               rhs = rhs_var,
+               model = starb_probit,
+               get_mfx = T,
+               perm = perm_controls,
+               base = base_controls,
+               fe_always = F,
+  run_from=3,
+               run_to = 5)
+
+# We'll put the probit DFs on the left, so we need to adjust the model numbers accordingly
+# so the probit and logit DFs don't plot on top of one another!
+coef_grid_probit = probit_dfs[[1]] %>% mutate(model = model + max(coef_grid_logit$model))
+control_grid_probit = probit_dfs[[2]] %>% mutate(model = model + max(control_grid_logit$model))
+
+coef_grid = bind_rows(coef_grid_logit, coef_grid_probit)
+control_grid = bind_rows(control_grid_logit, control_grid_probit)
+
+panels = stability_plot(coef_grid = coef_grid,
+               control_grid = control_grid,
+               data = diamonds, 
+               lhs = lhs_var, 
+               rhs = rhs_var,
+               perm = perm_controls,
+               base = base_controls,
+               fe_always = F,
+               run_from = 5,
+               run_to = 6)
+
+coef_plot = panels[[1]] + geom_vline(xintercept = 8.5, linetype='dashed', alpha=0.8) +
+  annotate(geom='label', x = 4.25, y = 1.8, 
+           label = 'Logit models', size=6, fill='#D3D3D3', alpha=0.7) + 
+  annotate(geom='label', x = 12.75, y = 1.8, 
+           label = 'Probit models', size=6, fill='#D3D3D3', alpha=0.7) +
+  coord_cartesian(ylim = c(-0.5, 1.9))
+
+control_plot = panels[[2]] + geom_vline(xintercept = 8.5, linetype='dashed', alpha=0.8)
+ 
+cowplot::plot_grid(coef_plot, control_plot, rel_heights=c(1,0.5), 
+                   align='v', ncol=1, axis='b')
+```
+
 
 ## Final notes
 
