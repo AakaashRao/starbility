@@ -111,6 +111,7 @@ create_felm_formulas = function(grid., perm., lhs., rhs., ...) {
   if (is.null(l$perm_fe)) perm_fe = c()
   if (is.null(l$nonperm_fe)) nonperm_fe = c()
   if (is.null(l$cluster)) cluster = '0'
+
   if (length(l)>0) {
     for(i in 1:length(l)) {
       assign(x = names(l)[i], value = l[[i]])
@@ -131,7 +132,6 @@ create_felm_formulas = function(grid., perm., lhs., rhs., ...) {
   if (!fe_always) {
     nonperm_fe = c(c('None'=''), nonperm_fe)
   }
-
   grid.$expr = apply(grid.[,1:length(base_perm)], 1, function(x) paste(base_perm[names(base_perm)[which(x==1)]], collapse='+'))
   if(length(perm_fe)>0) {
     grid.$expr2 = apply(grid.[,(length(base_perm)+1):ncol(grid.)], 1, function(x) paste(perm_fe[names(perm_fe)[which(x==1)]], collapse='+'))
@@ -300,7 +300,7 @@ create_plot_dfs = function(grid, perm., ...) {
   control_grid = coef_grid %>%
     dplyr::select(one_of(names(base), names(perm.), names(perm_fe), names(nonperm_fe)), -np_fe, model) %>%
     tidyr::gather(key, value, -model) %>%
-    dplyr::mutate(value = as.factor(value),
+    dplyr::mutate(value = factor(value, levels=c(0, 1)),
                   y = -as.numeric(factor(key, levels = unique(key))))
 
   return (list(coef_grid, control_grid))
@@ -309,7 +309,7 @@ create_plot_dfs = function(grid, perm., ...) {
 
 #' Draw coefficient stability plots.
 #'
-#' \code{draw_plots} is the fifth and final step of a \code{starbility} plot, following
+#' \code{draw_panels} is the fifth and final step of a \code{starbility} plot, following
 #' \code{create_plot_dfs}. It is generally called directly by \code{stability_plot},
 #' but the user can also call it manually.
 #'
@@ -347,7 +347,7 @@ create_plot_dfs = function(grid, perm., ...) {
 #' containing two `ggplot2`` objects: one corresponding to the coefficient panel and one
 #' corresponding to the control panel.
 #' @export
-draw_plot = function(coef_grid., control_grid., ...) {
+draw_panels = function(coef_grid., control_grid., ...) {
   nmodels = max(coef_grid.$model)
   l = list(...)
   if (is.null(l$control_geom)) control_geom = 'rect'
@@ -359,8 +359,8 @@ draw_plot = function(coef_grid., control_grid., ...) {
   if (is.null(l$point_size)) {
     point_size = case_when(
       nmodels<=10 ~ 3,
-      10<nmodels & nmodels<=40 ~ 2,
-      40<nmodels ~ 1
+      10<nmodels & nmodels<=60 ~ 2,
+      60<nmodels ~ 1
     )
   }
   if (is.null(l$error_alpha)) error_alpha = 0.2
@@ -553,6 +553,12 @@ stability_plot = function(data, lhs, rhs, perm, ...) {
   combine = ifelse(is.null(l$combine), T, l$combine)
   rel_height = ifelse(is.null(l$rel_height), 0.5, l$rel_height)
   run_to = ifelse(is.null(l$run_to), '', l$run_to)
+  run_from = ifelse(is.null(l$run_from), 0, l$run_from)
+  if (!is.null(l[['grid']])) grid = l[['grid']]
+  if (!is.null(l[['coef_grid']])) coef_grid = l[['coef_grid']]
+  if (!is.null(l[['control_grid']])) control_grid = l[['control_grid']]
+  if (!is.null(l[['coef_panel']])) coef_panel = l[['coef_panel']]
+  if (!is.null(l[['control_panel']])) control_panel = l[['control_panel']]
 
   # Convert RHS in case is factor
   if (!is.numeric(data[[rhs]])) {
@@ -566,29 +572,44 @@ stability_plot = function(data, lhs, rhs, perm, ...) {
     data$weight = data[[l$weights]]
   }
 
-  # Step 1: create control grid
-  grid = create_grid(perm, lhs, rhs, ...)
-  if (run_to==2) return (grid)
+  if (run_from<2) {
+    # Step 1: create control grid
+    grid = create_grid(perm, lhs, rhs, ...)
+    if (run_to==2) return (grid)
+  }
 
-  # Step 2: add formulas to grid
-  grid = create_felm_formulas(grid, perm.=perm, lhs.=lhs, rhs.=rhs, ...)
-  if (run_to==3) return (grid)
+  if (run_from<3) {
+    # Step 2: add formulas to grid
+    grid = create_felm_formulas(grid.=grid, perm.=perm, lhs.=lhs, rhs.=rhs, ...)
+    if (run_to==3) return (grid)
+  }
 
-  # Step 3: estimate models
-  grid = create_model_estimates(grid.=grid, data. = data, lhs. = lhs, rhs. = rhs, perm. = perm, ...)
-  if (run_to==4) return (grid)
+  if (run_from<4) {
+    # Step 3: estimate models
+    grid = create_model_estimates(grid.=grid, data. = data, lhs. = lhs, rhs. = rhs, perm. = perm, ...)
+    if (run_to==4) return (grid)
+  }
 
-  # Step 4: create plot dataframes
-  dfs = create_plot_dfs(grid.=grid, perm.=perm, ...)
-  if (run_to==5) return (dfs)
-  coef_grid = dfs[[1]]
-  control_grid = dfs[[2]]
+  if (run_from<5) {
+    # Step 4: create plot dataframes
+    dfs = create_plot_dfs(grid.=grid, perm.=perm, ...)
+    if (run_to==5) return (dfs)
+    coef_grid = dfs[[1]]
+    control_grid = dfs[[2]]
+  }
 
-  # Step 5: draw the panels
-  panels = draw_plot(coef_grid.=coef_grid, control_grid.=control_grid, ...)
-  if (run_to==6) return (panels)
+  if (run_from<6) {
+    # Step 5: draw the panels
+    panels = draw_panels(coef_grid.=coef_grid, control_grid.=control_grid, ...)
+    if (run_to==6) return (panels)
+    coef_panel = panels[[1]]
+    control_panel = panels[[2]]
+  }
 
-  return(combine_plots(panels[[1]], panels[[2]], rel_height))
+  if (run_from<7) {
+    # Step 6: combine the panels
+    return(combine_plots(coef_panel, control_panel, rel_height))
+  }
 
 }
 

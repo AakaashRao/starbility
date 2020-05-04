@@ -1,4 +1,4 @@
-starb_felm = function(spec, data, rhs) {
+starb_felm = function(spec, data, rhs, ...) {
   spec = as.formula(spec)
   model = lfe::felm(spec, data=data, weights=data$weight) %>%
     broom::tidy()
@@ -8,6 +8,7 @@ starb_felm = function(spec, data, rhs) {
   se   = model[row, 'std.error'] %>% as.numeric()
   p    = model[row, 'p.value'] %>% as.numeric()
 
-  return(c(coef, p, coef+1.96*se, coef-1.96*se))
+  z = qnorm(0.975)
+  return(c(coef, p, coef+z*se, coef-z*se))
 }
 

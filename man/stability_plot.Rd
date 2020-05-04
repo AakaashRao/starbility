@@ -61,8 +61,9 @@ If left unspecified, OLS coefficients are plotted.}
 clustered. Defaults to no clustering.}
 
 \item{weights}{A string indicating the name of the variable containing weights. Defaults to equal
-weighting.
-#' @param run_to A numeric scalar indicating at which step the \code{stability_plot} should stop.
+weighting.}
+
+\item{run_to}{A numeric scalar indicating at which step the \code{stability_plot} should stop.
 This is useful if you want to make manual edits at one step. If left unspecified, runs entire
 plot. Currently, values of note include \code{run_to=2} (useful if you want to define your own
 formulas for use in models other than \code{felm}), \code{run_to=5} (useful if you want to take
@@ -110,8 +111,8 @@ panels. Else, returns the output of the function
 \code{stability_plot} is used to quickly produce a plot showing the stability of the OLS estimate
 of the explanatory variable \code{rhs} on the outcome variable \code{lhs} under combinations
 of a given set of controls. Fixed effects, clustering, weights, and instrumental
-variables are supported. \code{stability_plot} is a wrapper the five steps of the pipeline; see
-the advanced usage vignette for details.
+variables are supported. \code{stability_plot} is a wrapper for the five steps of the
+\code{starbility} pipeline; see the advanced usage vignette for details.
 }
 \details{
 Each row of the bottom panel of the plot corresponds to a single variable set.
