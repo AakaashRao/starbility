@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 
 ```
 
-A common exercise in applied microeconomics is assessing the stability of a coefficient under different choices of controls. This can be a tedious task for the econometrician, particularly with a large set of controls, but more importantly, it's difficult to concisely convey this information to the reader. Regression tables are useful for displaying a limited number of models, but they're less useful for displaying how coefficients evolve under dozens or even hundreds sets of controls. `starbility` provides a simple interface to create a "coefficient stability plot", allowing both the econometrician and the reader to assess coefficient stability under different combinations of controls. `starbility` builds upon `lfe` and `ggplot2`, allowing for fast estimation of models with many groups of fixed effects and flexible plotting.
+A common exercise in applied microeconomics is assessing the stability of a coefficient under different choices of controls. This can be a tedious task for the econometrician, particularly with a large set of controls, but more importantly, it’s difficult to concisely convey this information to the reader. Regression tables are useful for displaying a limited number of models, but they’re less useful for displaying how coefficients evolve under dozens or even hundreds of sets of controls. `starbility` provides a simple interface to create a “coefficient stability plot”, allowing both the econometrician and the reader to assess coefficient stability under different combinations of controls. `starbility` builds upon `lfe` and `ggplot2`, allowing for fast estimation of models with many groups of fixed effects and flexible plotting.
 
 ## Setup
 
@@ -27,20 +27,20 @@ library(starbility)
 library(lfe)
 data("diamonds")
 set.seed(43)
-indices = sample(1:nrow(diamonds), replace=F, size=round(nrow(diamonds)/20))
+indices = sample(1:nrow(diamonds), replace = F, size = round(nrow(diamonds)/20))
 diamonds = diamonds[indices,]
 ```
 
 Suppose we are interested in understanding the relationship between the carat of a diamond and the price. We begin with a simple OLS regression.
 
 ```{r ols-1}
-felm(price~carat, data=diamonds) %>% summary
+felm(price~carat, data = diamonds) %>% summary
 ```
 
 We might want to control for other characteristics of the diamond and include some fixed effects:
 
 ```{r ols-2}
-felm(price~carat+depth+table+x+y+z|cut+color+clarity, data=diamonds) %>% summary
+felm(price~carat+depth+table+x+y+z|cut+color+clarity, data = diamonds) %>% summary
 ```
 
 The estimated coefficient of interest (`carat`) has changed substantially. Let's use `starbility` to evaluate how the coefficient is affected by different combinations of controls.
@@ -48,16 +48,16 @@ The estimated coefficient of interest (`carat`) has changed substantially. Let's
 ## A first plot
 Let's begin with a simple plot, varying just two controls:
 
-```{r stability-1, fig.width=7.3, fig.height=4}
+```{r stability-1, fig.width = 7.2, fig.height = 4}
 perm_controls = c(
   'Depth' = 'depth',
   'Width of top relative to widest point' = 'table'
 )
 
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls)
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls)
 ```
 
 The first column displays the coefficient estimate and associated 95\% confidence interval if we do not control for `depth` or `table`, the second column displays the estimate and CI if we control for `depth` but not `table`, etc. 
@@ -66,22 +66,22 @@ The first column displays the coefficient estimate and associated 95\% confidenc
 
 Now, let's also control for the dimension of the diamond: `x`, `y`, and `z`. We probably don't want to vary all of these three dimensions separately, so let's include them in a single *variable set* by specifying them together, separated by `+` signs:
 
-```{r controls-1, fig.width=7.3, fig.height=4}
+```{r controls-1, fig.width = 7.2, fig.height = 4}
 perm_controls = c(
   'Depth' = 'depth',
   'Width of top relative to widest point' = 'table',
   'Diamond dimensions' = 'x + y + z'
 )
 
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls)
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls)
 ```
 
 Including dimensions seems to make a big difference, so perhaps we want to control for dimensions in all specifications. We can do this by specifying dimensions as `base` controls rather than `perm` controls:
 
-```{r controls-2, fig.width=7.3, fig.height=4}
+```{r controls-2, fig.width = 7.2, fig.height = 4}
 base_controls = c(
   'Diamond dimensions' = 'x + y + z'
 )
@@ -90,36 +90,36 @@ perm_controls = c(
   'Width of top relative to widest point' = 'table'
 )
 
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls, 
-                      base=base_controls)
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls, 
+                      base = base_controls)
 ```
 
 ## Adding fixed effects
 Now, let's add in some fixed effects. We could specify these directly in `perm`. However, explicitly declaring fixed effects by specifying them in `perm_fe` has a big advantage: it allows us to use `felm`'s implementation of the Method of Alternating Projections to sweep out fixed effects from the normal equations before estimation, resulting in a considerable performance improvement on large datasets with many sets of fixed effects. In the example below, I also increase the default value of `rel_height` to give the bottom panel a little more space:
 
-```{r fe-1, fig.width=7.3, fig.height=4}
+```{r fe-1, fig.width = 7.2, fig.height = 4}
 perm_fe_controls = c(
   'Cut FE' = 'cut',
   'Color FE' = 'color',
   'Clarity FE' = 'clarity'
 )
 
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls, 
-                      base=base_controls, 
-                      perm_fe=perm_fe_controls, 
-                      rel_height=0.6)
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls, 
+                      base = base_controls, 
+                      perm_fe = perm_fe_controls, 
+                      rel_height = 0.6)
 
 ```
 
 Note that all combinations of `perm_fe` are included, just as all combinations of `perm` are included. This is desirable in some cases, but not in others. For example, in a setting where we want to show some models with state fixed effects and some models with county fixed effects, it would never make sense to show a model with both state and county fixed effects (indeed, we would be unable to estimate such a model). We can tell `starbility` to include fixed effects *sequentially* using `nonperm_fe`. To illustrate, we will create a new fixed effect, `high_clarity`, which is collinear with `clarity` in the same way that county would be collinear with state.
 
-```{r fe-2, fig.width=7.3, fig.height=4}
+```{r fe-2, fig.width = 7.2, fig.height = 4}
 diamonds$high_clarity = diamonds$clarity %in% c('VS1','VVS2','VVS1','IF')
 
 perm_fe_controls = c(
@@ -131,29 +131,29 @@ nonperm_fe_controls = c(
   'Clarity FE (binary)' = 'high_clarity'
 )
 
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls, 
-                      base=base_controls, 
-                      perm_fe=perm_fe_controls, 
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls, 
+                      base = base_controls, 
+                      perm_fe = perm_fe_controls, 
                       nonperm_fe = nonperm_fe_controls, 
-                      rel_height=0.6)
+                      rel_height = 0.6)
 
 ```
 
-Note that the first set of models in the plot are estimated without including any of the controls in `nonperm_fe`. This is `starbility`'s default behavior, but it can be disabled by setting `include_no_fe_specs=F`:
+Note that the first set of models in the plot are estimated without including any of the controls in `nonperm_fe`. This is `starbility`'s default behavior, but it can be disabled by setting `fe_always = F`:
 
-```{r fe-3, fig.width=7.3, fig.height=4}
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls, 
-                      base=base_controls, 
-                      perm_fe=perm_fe_controls, 
-                      nonperm_fe=nonperm_fe_controls, 
-                      include_no_fe_specs=F, 
-                      rel_height=0.6)
+```{r fe-3, fig.width = 7.2, fig.height = 4}
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls, 
+                      base = base_controls, 
+                      perm_fe = perm_fe_controls, 
+                      nonperm_fe = nonperm_fe_controls, 
+                      fe_always = F, 
+                      rel_height = 0.6)
 
 ```
 
@@ -161,18 +161,18 @@ create_stability_plot(data=diamonds,
 
 `starbility` also supports 2SLS estimation. To demonstrate, let's try instrumenting `carat` with `x`,`y`, and `y`. This also means we will need to exclude `x`, `y`, and `z` from the controls.
 
-```{r iv-1, fig.width=7.3, fig.height=4}
+```{r iv-1, fig.width = 7.2, fig.height = 4}
 instruments = 'x+y+z'
 
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
                       iv = instruments,
-                      perm=perm_controls, 
-                      perm_fe=perm_fe_controls, 
-                      nonperm_fe=nonperm_fe_controls, 
-                      include_no_fe_specs=F, 
-                      rel_height=0.6)
+                      perm = perm_controls, 
+                      perm_fe = perm_fe_controls, 
+                      nonperm_fe = nonperm_fe_controls, 
+                      fe_always = F, 
+                      rel_height = 0.6)
 
 ```
 
@@ -180,30 +180,61 @@ create_stability_plot(data=diamonds,
 
 Clustered standard errors and weights are supported using a straightforward syntax. In the example below, I generate some placeholder weights, then weight by these placeholders and cluster standard errors at the `cut` level.
 
-```{r clust-1, warning=F, fig.width=7.3, fig.height=4}
-diamonds$sample_weights = runif(n= nrow(diamonds))
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat',
-                      cluster='cut',
-                      weights='sample_weights',
-                      perm=perm_controls, 
-                      base=base_controls, 
-                      perm_fe=perm_fe_controls, 
-                      nonperm_fe=nonperm_fe_controls, 
-                      include_no_fe_specs=F, 
-                      rel_height=0.6)
+```{r clust-1, warning = F, fig.width = 7.2, fig.height = 4}
+diamonds$sample_weights = runif(n = nrow(diamonds))
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat',
+                      cluster = 'cut',
+                      weights = 'sample_weights',
+                      perm = perm_controls, 
+                      base = base_controls, 
+                      perm_fe = perm_fe_controls, 
+                      nonperm_fe = nonperm_fe_controls, 
+                      fe_always = F, 
+                      rel_height = 0.6)
 
+```
+
+## Adjusting standard errors, p-values, etc.
+
+Adjusting standard errors (e.g. robust SEs, Conley SEs, etc.) and p-values (e.g. to adjust for a one-tailed test) is straightforward, but requires a little more work. We need to define a function that takes at least three arguments: spec (a string containing the model specification), data (the data frame containing the variables in the model), and rhs (the name of the coefficient of interest). Arbitrary additional arguments are permitted. The function should then output a vector containing, in order, the coefficient estimate, the p-value, the bottom value of the error region, and the top value of the error region.
+
+Let’s try an example where we divide the p-value by two (to simulate a one-tailed test) and we calculate 99% confidence intervals (instead of the default 95% confidence intervals.)
+
+```{r adj-1}
+starb_felm_custom = function(spec, data, rhs, ...) {
+  spec = as.formula(spec)
+  model = lfe::felm(spec, data=data) %>% broom::tidy()
+
+  row = which(model$term==rhs)
+  coef = model[row, 'estimate'] %>% as.numeric()
+  se   = model[row, 'std.error'] %>% as.numeric()
+  p    = model[row, 'p.value'] %>% as.numeric()
+  
+  z = qnorm(0.995)
+  return(c(coef, p/2, coef+z*se, coef-z*se))
+}
+
+stability_plot(data = diamonds, 
+               lhs = 'price', 
+               rhs = 'carat', 
+               model = starb_felm_custom,
+               perm = perm_controls, 
+               base = base_controls, 
+               perm_fe = perm_fe_controls, 
+               nonperm_fe = nonperm_fe_controls, 
+               fe_always = T, 
+               rel_height = 0.6)
 ```
 
 ## Aesthetics
 
-Let's now explore some options relating to plot aesthetics. The plots above have relatively few models,
-so let's increase the number of models by specifying the dimensions as separate controls. Our model is estimated very precisely, so to make this example closer to a real-world application (in which coefficient estimates are often less precise), we'll add randomly-generated noise to the dependent variable.
+Let's now explore some options relating to plot aesthetics. The plots above have relatively few models, so let's increase the number of models by specifying the dimensions as separate controls. Our model is estimated very precisely, so to make this example closer to a real-world application (in which coefficient estimates are often less precise), we'll add randomly-generated noise to the dependent variable.
 
-```{r aesthetics-1, fig.width=7.3, fig.height=4}
+```{r aesthetics-1, fig.width = 7.2, fig.height = 4}
 diamonds$high_clarity = diamonds$clarity %in% c('VS1','VVS2','VVS1','IF')
-diamonds$price = diamonds$price + rnorm(n=nrow(diamonds), sd=12*sd(diamonds$price))
+diamonds$price = diamonds$price + rnorm(n = nrow(diamonds), sd = 12*sd(diamonds$price))
 
 perm_controls = c(
   'Dimension x' = 'x',
@@ -221,15 +252,15 @@ nonperm_fe_controls = c(
   'Clarity FE (binary)' = 'high_clarity'
 )
 
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      error_geom='ribbon',
-                      perm=perm_controls, 
-                      perm_fe=perm_fe_controls, 
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      error_geom = 'ribbon',
+                      perm = perm_controls, 
+                      perm_fe = perm_fe_controls, 
                       nonperm_fe = nonperm_fe_controls, 
-                      include_no_fe_specs=F, 
-                      rel_height=0.6)
+                      fe_always = F, 
+                      rel_height = 0.6)
 ```
 
 Adding random noise also generated more variation in the p-values on our coefficient of interest. By default, `stabilityr` colors coefficients that are significant at $p<0.01$ red, coefficients significant at $p<0.05$ green, coefficients significant at $p<0.10$ blue, and coefficients that are not significant at $p<0.10$ black. Implementing custom breaks and custom colors is on my to-do list.
@@ -240,18 +271,18 @@ This type of plot is of course completely unhelpful if we're interested in the c
 
 ### Sorting
 
-By default, models are displayed in an order based on the ordering of controls. To instead display models by coefficient values, we can use the `sort` argument. `sort=asc` and `sort=desc` sort coefficient values in ascending and descending order, respectively. If we want to preserve the order of `nonperm_fe` groups but sort coefficient values within these groups, we can use `sort=asc-by-fe` and `sort=desc-by-fe`. 
+By default, models are displayed in an order based on the ordering of controls. To instead display models by coefficient values, we can use the `sort` argument. `sort = asc` and `sort = desc` sort coefficient values in ascending and descending order, respectively. If we want to preserve the order of `nonperm_fe` groups but sort coefficient values within these groups, we can use `sort = asc-by-fe` and `sort = desc-by-fe`. 
 
-```{r aesthetics-2, fig.width=7.3, fig.height=4}
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls, 
-                      perm_fe=perm_fe_controls, 
+```{r aesthetics-2, fig.width = 7.2, fig.height = 4}
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls, 
+                      perm_fe = perm_fe_controls, 
                       nonperm_fe = nonperm_fe_controls, 
-                      include_no_fe_specs=F, 
-                      rel_height=0.6, 
-                      sort='asc-by-fe')
+                      fe_always = F, 
+                      rel_height = 0.6, 
+                      sort = 'asc-by-fe')
 
 ```
 
@@ -259,29 +290,29 @@ This is useful in some contexts (e.g. to visualize the total range of the coeffi
 
 ### Error geoms
 
-Error bars can look a little cluttered. We can alternatively display confidence intervals using a ribbon with `error_geom='ribbon'`. This tends to be preferable when (1) we are using `sort` (or coefficients are already very stable) and (2) when we have a lot of models. We can also omit confidence intervals entirely with `error_geom='none'`.
+Error bars can look a little cluttered. We can alternatively display confidence intervals using a ribbon with `error_geom = 'ribbon'`. This tends to be preferable when (1) we are using `sort` (or coefficients are already very stable) and (2) when we have a lot of models. We can also omit confidence intervals entirely with `error_geom = 'none'`.
 
-```{r aesthetics-3, fig.width=7.3, fig.height=4}
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls, 
-                      perm_fe=perm_fe_controls, 
+```{r aesthetics-3, fig.width = 7.2, fig.height = 4}
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls, 
+                      perm_fe = perm_fe_controls, 
                       nonperm_fe = nonperm_fe_controls, 
-                      include_no_fe_specs=F, 
+                      fe_always = F, 
                       error_geom = 'ribbon', 
-                      rel_height=0.6,
-                      sort='asc-by-fe')
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls, 
-                      perm_fe=perm_fe_controls, 
+                      rel_height = 0.6,
+                      sort = 'asc-by-fe')
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls, 
+                      perm_fe = perm_fe_controls, 
                       nonperm_fe = nonperm_fe_controls, 
-                      include_no_fe_specs=F, 
+                      fe_always = F, 
                       error_geom = 'none', 
-                      rel_height=0.6, 
-                      sort='asc-by-fe')
+                      rel_height = 0.6, 
+                      sort = 'asc-by-fe')
 
 ```
 
@@ -289,35 +320,35 @@ create_stability_plot(data=diamonds,
 
 By default, `geom_rect` is used to indicate the presence of controls. `geom_rect` is a good choice when estimating many models, since blocks of continuous rectangles look more neat, but `geom_circle` can be a good alternative when we have fewer models. Some manual edits using `rel_height` and `control_spacing` are generally required.
 
-```{r aesthetics-4, fig.width=7.3, fig.height=4}
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls[1:4], 
-                      control_geom='circle',
-                      include_no_fe_specs=F, 
-                      rel_height=0.6,
-                      point_size=2,
-                      control_spacing=0.3)
+```{r aesthetics-4, fig.width = 7.2, fig.height = 4}
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls[1:4], 
+                      control_geom = 'circle',
+                      fe_always = F, 
+                      rel_height = 0.6,
+                      point_size = 2,
+                      control_spacing = 0.3)
 ```
 
 ### Other options
 
 A number of other aesthetic options are available:
 
-```{r aesthetics-5, fig.width=7.3, fig.height=4}
-create_stability_plot(data=diamonds, 
-                      lhs='price', 
-                      rhs='carat', 
-                      perm=perm_controls, 
-                      perm_fe=perm_fe_controls, 
+```{r aesthetics-5, fig.width = 7.2, fig.height = 4}
+stability_plot(data = diamonds, 
+                      lhs = 'price', 
+                      rhs = 'carat', 
+                      perm = perm_controls, 
+                      perm_fe = perm_fe_controls, 
                       nonperm_fe = nonperm_fe_controls, 
-                      include_no_fe_specs=F, 
+                      fe_always = F, 
                       error_geom = 'ribbon', 
-                      rel_height=0.7,
-                      error_alpha=0.2, # change alpha of the error geom
-                      point_size=1.5, # change the size of the coefficient points
-                      control_text_size=10, # change the size of the control labels
+                      rel_height = 0.7,
+                      error_alpha = 0.2, # change alpha of the error geom
+                      point_size = 1.5, # change the size of the coefficient points
+                      control_text_size = 10, # change the size of the control labels
                       coef_ylim = c(-5000, 35000), # change the endpoints of the y-axis
                       trip_top = 3) # change the spacing between the two panels
 ```
@@ -325,31 +356,38 @@ create_stability_plot(data=diamonds,
 
 ## Further customization
 
-By default, `create_stability_plot` returns a grid (generated by `cowplot`). We can instead return the bottom and top `ggplot2` panels individually using `combine=F`. The advantage is that we can use standard `ggplot2` syntax to adapt the panels. In the example below, I reverse the $y$-axis, remove the minor horizontal rules, and add an annotation. We can then combine the plots using the `combine_plots` helper function.
+By default, `stability_plot` returns a grid (generated by `cowplot`). We can instead return the bottom and top `ggplot2` panels individually using `run_to = 6` (more on this mysterious syntax in the advanced vignette). The advantage is that we can use standard `ggplot2` syntax to adapt the panels. In the example below, I reverse the $y$-axis, remove the minor horizontal rules, and add an annotation. We can then combine the plots using the `combine_plots` helper function.
 
-```{r split-1, fig.width=7.3, fig.height=4}
-plots = create_stability_plot(data=diamonds, 
-                              lhs='price', 
-                              rhs='carat', 
-                              perm=perm_controls, 
-                              error_geom='ribbon',
+```{r split-1, fig.width = 7.2, fig.height = 4}
+plots = stability_plot(data = diamonds, 
+                              lhs = 'price', 
+                              rhs = 'carat', 
+                              perm = perm_controls, 
+                              error_geom = 'ribbon',
                               nonperm_fe = nonperm_fe_controls, 
-                              include_no_fe_specs=F, 
-                              rel_height=0.6, 
-                              combine=F)
+                              fe_always = F, 
+                              rel_height = 0.6, 
+                              run_to = 6)
 
 replacement_coef_panel = plots[[1]] + 
   scale_y_reverse() +
-  theme(panel.grid.minor=element_blank()) +
-  geom_vline(xintercept=41, linetype='dashed', alpha=0.4) +
-  annotate(geom='label', x = 49, y = 6000, label = 'What a great\nspecification!', alpha=0.75)
+  theme(panel.grid.minor = element_blank()) +
+  geom_vline(xintercept = 41, linetype = 'dashed', alpha = 0.4) +
+  annotate(geom = 'label', x = 49, y = 6000, label = 'What a great\nspecification!', alpha = 0.75)
 
 combine_plots(replacement_coef_panel, 
               plots[[2]], 
-              rel_height=0.6)
+              rel_height = 0.6)
 ```
 
 ## Final notes
 
-Comments, criticism, suggestions, pull requests, etc. are very much appreciated. Email: <arao@g.harvard.edu>. Thanks to David Yanagizawa-Drott for suggesting the structure of the plot.
+Comments, criticism, suggestions, pull requests, etc. are very much appreciated. Email: <arao@g.harvard.edu>. Thanks to David Yanagizawa-Drott for suggesting the structure of the plot and to Ross Mattheis and Eric Karsten for very helpful feedback.
+
+If you're ready to move on to more advanced features, the [advanced vignette](https://htmlpreview.github.io/?https://github.com/AakaashRao/starbility/blob/master/doc/starbility-advanced.html) discusses the following topics in greater depth:
+1. The \code{starbility} pipeline
+2. Estimate models that are not automatically supported in \code{starbility}. (Currently, the only function automatically supported is `felm`)
+3. Manual `ggplot2` plotting
+
+Thanks for reading!
 
