@@ -6,7 +6,7 @@ Authors@R:
            family = "Rao",
            role = c("aut", "cre"),
            email = "arao@g.harvard.edu")
-Description: starbility is used to produce a plot showing the stability of the OLS estimate of an explanatory variable on an outcome variable under combinations of a given set of controls. Plots contain two panels: the top panel shows coefficient point estimates and confidence intervals for each specification, and the bottom panel is a graphical display of the control variables included in the specification.
+Description: starbility is used to produce a plot showing the stability of a coefficient estimate under different combinations of a given set of controls. Plots contain two panels: the top panel displays coefficient point estimates and confidence intervals for each specification, and the bottom panel displays the control variables included in each specification.
 License: `use_mit_license()`
 Encoding: UTF-8
 LazyData: true
@@ -17,9 +17,10 @@ Imports:
 	broom, 
 	ggplot2, 
 	lfe, 
-	ggforce, 
 	cowplot
 Suggests: 
     knitr,
+    viridis,
+    ggforce,
     rmarkdown
 VignetteBuilder: knitr

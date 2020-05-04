@@ -4,12 +4,12 @@
 \alias{combine_plots}
 \title{Combine coefficient panel and control panel to create a stability plot.}
 \usage{
-combine_plots(coef, control, rel_height = 0.5, ...)
+combine_plots(coef, control, rel_height, ...)
 }
 \arguments{
-\item{coef}{A ggplot2 object. A coefficient plot, generally generated using \code{create_stability_plot}.}
+\item{coef}{A ggplot2 object. A coefficient plot, generally generated using \code{stability_plot}.}
 
-\item{control}{A ggplot2 object. A control plot, generally generated using \code{create_stability_plot}.}
+\item{control}{A ggplot2 object. A control plot, generally generated using \code{stability_plot}.}
 
 \item{rel_height}{A numeric scalar. Height of the control plot relative to the coefficient plot.}
 }
@@ -18,7 +18,7 @@ A \code{cowplot} grid.
 }
 \description{
 \code{combine_plots} is used to combined a coefficient panel and a control panel. When \code{combine=T}
-in \code{create_stability_plot}, it is called automatically from \code{create_stability_plot}. However, it
+in \code{stability_plot}, it is called automatically from \code{stability_plot}. However, it
 can also be called by the user to bind two plots together. This is useful if the user wishes to edit one plot
 using standard \code{ggplot2} syntax.
 }
