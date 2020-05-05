@@ -18,4 +18,4 @@ Comments, criticism, suggestions, pull requests, etc. are very much appreciated.
 Thanks to David Yanagizawa-Drott for suggesting the structure of the plot and to Ross Mattheis and Eric Karsten for very helpful discussions during development.
 
 ## Stata implementation
-Looking for a Stata implementation? Hans H. Sievertsen provides an excellent example .ado file [here](https://github.com/hhsievertsen/speccurve). 
+Looking for a Stata implementation? Martin Andresen provides a package [here](https://github.com/martin-andresen/speccurve) and Hans H. Sievertsen provides a detailed example .ado file [here](https://github.com/hhsievertsen/speccurve). 
