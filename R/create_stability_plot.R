@@ -43,7 +43,7 @@ create_grid = function(perm, lhs, rhs, ...) {
       assign(x = names(l)[i], value = l[[i]])
     }
   }
-  if (is.null(l$fe_always) | length(nonperm_fe)==0) fe_always=F
+  if (is.null(l$fe_always) | length(nonperm_fe)==0) fe_always = F
 
   # Begin by creating grid of perm
   grid = expand.grid(rep(list(c(0,1)), length(perm)+length(perm_fe)))
@@ -63,7 +63,6 @@ create_grid = function(perm, lhs, rhs, ...) {
   fes = rep(nonperm_fe, each=nrow(grid))
   grid = do.call("rbind", replicate(copies, grid, simplify = FALSE))
   grid$np_fe = fes
-
   return(grid)
 }
 
@@ -205,12 +204,20 @@ create_model_estimates = function(grid., data., lhs., rhs., perm., ...) {
     mod = function(x) input_mod(spec=x, data=data., rhs=rhs., ...)
   }
 
+  if (requireNamespace("furrr", quietly=TRUE)) {
+    future::plan(multiprocess)
+    mapper = furrr::future_map
+  } else {
+    mapper = purrr::map
+  }
+
   grid = grid. %>%
-      mutate(model = purrr::map(expr, mod),
-             coef = purrr::map_dbl(model, function(x) x[1]),
-             p = purrr::map_dbl(model, function(x) x[2]),
-             error_high = purrr::map_dbl(model, function(x) x[3]),
-             error_low = purrr::map_dbl(model, function(x) x[4])) %>%
+      mutate(model = mapper(expr, mod),
+             coef = purrr::map_dbl(model, 1),
+             p = purrr::map_dbl(model, 2),
+             error_high = purrr::map_dbl(model, 3),
+             error_low = purrr::map_dbl(model, 4),
+             r2 = purrr::map_dbl(model, 5)) %>%
     dplyr::select(-model) %>%
     mutate(p = case_when(
              p<0.01 ~ 'p<0.01',
@@ -352,6 +359,7 @@ draw_panels = function(coef_grid., control_grid., ...) {
   l = list(...)
   if (is.null(l$control_geom)) control_geom = 'rect'
   if (is.null(l$coef_ylabel)) coef_ylabel = 'Coefficient estimate'
+  if (is.null(l$font)) font = 'Arial'
   if (is.null(l$control_spacing)) {
     control_spacing = ifelse(nmodels>=40, 1, 0.75)
   }
@@ -390,7 +398,8 @@ draw_panels = function(coef_grid., control_grid., ...) {
           axis.title = element_blank(),
           panel.grid.major.x = element_blank(),
           panel.grid.minor.x = element_blank(),
-          panel.border = element_blank())
+          panel.border = element_blank(),
+          text = element_text(family=font))
 
   if (error_geom == 'ribbon') {
     coef_plot = coef_plot + geom_ribbon(aes(ymin=error_low, ymax=error_high), alpha=error_alpha)
@@ -415,7 +424,8 @@ draw_panels = function(coef_grid., control_grid., ...) {
           axis.title = element_blank(),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
-          panel.border = element_blank()) +
+          panel.border = element_blank(),
+          text = element_text(family=font)) +
     scale_y_continuous(breaks = unique(control_grid.$y), labels = unique(control_grid.$key),
                        limits=c(min(control_grid.$y)-1, max(control_grid.$y)+1)) +
     coord_cartesian(xlim=c(1-min_space, nmodels+min_space))
@@ -609,6 +619,83 @@ stability_plot = function(data, lhs, rhs, perm, ...) {
   if (run_from<7) {
     # Step 6: combine the panels
     return(combine_plots(coef_panel, control_panel, rel_height))
+  }
+
+}
+
+draw_oster = function(coef_grid., ...) {
+  l = list()
+  font = ifelse(is.null(l$font),'Arial', l$font)
+
+  print(nrow(coef_grid.))
+  plot = ggplot(coef_grid., aes(x = r2, y = coef, col = p)) +
+    geom_point() +
+    scale_color_manual(breaks = c('p<0.01','p<0.05','p<0.10','p>0.10'),
+                       values=c('#F8766D', '#7CAE00', '#00BFC4', '#000000')) +
+    xlab('Model R-squared') +
+    ylab('Coefficient estimate') +
+    theme_bw() +
+    theme(legend.position='none',
+          text = element_text(family=font))
+
+  return(plot)
+
+}
+
+oster_plot = function(data, lhs, rhs, perm, ...) {
+  l = list(...)
+
+  run_to = ifelse(is.null(l$run_to), '', l$run_to)
+  run_from = ifelse(is.null(l$run_from), 0, l$run_from)
+
+  if (!is.null(l[['grid']])) grid = l[['grid']]
+  if (!is.null(l[['coef_grid']])) coef_grid = l[['coef_grid']]
+  if (!is.null(l[['control_grid']])) control_grid = l[['control_grid']]
+  if (!is.null(l[['coef_panel']])) coef_panel = l[['coef_panel']]
+  if (!is.null(l[['control_panel']])) control_panel = l[['control_panel']]
+
+  # Convert RHS in case is factor
+  if (!is.numeric(data[[rhs]])) {
+    data[[rhs]] = as.numeric(data[[rhs]])
+  }
+
+  # Add equal weights if none exist
+  if (is.null(l$weights)) {
+    data$weight = 1
+  } else {
+    data$weight = data[[l$weights]]
+  }
+
+  if (run_from<2) {
+    # Step 1: create control grid
+    grid = create_grid(perm, lhs, rhs, ...)
+    if (run_to==2) return (grid)
+  }
+
+  if (run_from<3) {
+    # Step 2: add formulas to grid
+    grid = create_felm_formulas(grid.=grid, perm.=perm, lhs.=lhs, rhs.=rhs, ...)
+    if (run_to==3) return (grid)
+  }
+
+  if (run_from<4) {
+    # Step 3: estimate models
+    grid = create_model_estimates(grid.=grid, data. = data, lhs. = lhs, rhs. = rhs, perm. = perm, ...)
+    if (run_to==4) return (grid)
+  }
+
+  if (run_from<5) {
+    # Step 4: create plot dataframes
+    dfs = create_plot_dfs(grid.=grid, perm.=perm, ...)
+    if (run_to==5) return (dfs)
+    coef_grid = dfs[[1]]
+    control_grid = dfs[[2]]
+  }
+
+  if (run_from<6) {
+    # Step 5: draw plot
+    plot = draw_oster(coef_grid.=coef_grid, ...)
+    return (plot)
   }
 
 }
