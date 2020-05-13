@@ -204,8 +204,8 @@ create_model_estimates = function(grid., data., lhs., rhs., perm., ...) {
     mod = function(x) input_mod(spec=x, data=data., rhs=rhs., ...)
   }
 
-  if (requireNamespace("furrr", quietly=TRUE)) {
-    future::plan(multiprocess)
+  if (requireNamespace("furrr", quietly=TRUE) & requireNamespace("future", quietly=TRUE)) {
+    future::plan(future::multiprocess)
     mapper = furrr::future_map
   } else {
     mapper = purrr::map
@@ -624,12 +624,12 @@ stability_plot = function(data, lhs, rhs, perm, ...) {
 }
 
 draw_oster = function(coef_grid., ...) {
-  l = list()
+  l = list(...)
   font = ifelse(is.null(l$font),'Arial', l$font)
 
   print(nrow(coef_grid.))
   plot = ggplot(coef_grid., aes(x = r2, y = coef, col = p)) +
-    geom_point() +
+    geom_point(alpha=0.7) +
     scale_color_manual(breaks = c('p<0.01','p<0.05','p<0.10','p>0.10'),
                        values=c('#F8766D', '#7CAE00', '#00BFC4', '#000000')) +
     xlab('Model R-squared') +
