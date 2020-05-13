@@ -655,10 +655,6 @@ oster_plot = function(data, lhs, rhs, perm, ...) {
   if (!is.null(l[['coef_panel']])) coef_panel = l[['coef_panel']]
   if (!is.null(l[['control_panel']])) control_panel = l[['control_panel']]
 
-  # Convert RHS in case is factor
-  if (!is.numeric(data[[rhs]])) {
-    data[[rhs]] = as.numeric(data[[rhs]])
-  }
 
   # Add equal weights if none exist
   if (is.null(l$weights)) {
@@ -668,6 +664,10 @@ oster_plot = function(data, lhs, rhs, perm, ...) {
   }
 
   if (run_from<2) {
+    # Convert RHS in case is factor
+    if (!is.numeric(data[[rhs]])) {
+      data[[rhs]] = as.numeric(data[[rhs]])
+    }
     # Step 1: create control grid
     grid = create_grid(perm, lhs, rhs, ...)
     if (run_to==2) return (grid)
