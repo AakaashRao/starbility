@@ -642,6 +642,7 @@ draw_oster = function(coef_grid., ...) {
 
 }
 
+#' @export
 oster_plot = function(data, lhs, rhs, perm, ...) {
   l = list(...)
 
