@@ -1,4 +1,5 @@
 # starbility: coefficient stability plots under combinations of controls
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3836857.svg)](https://doi.org/10.5281/zenodo.3836857)
 
 A common exercise in applied microeconomics is to assess the stability of a coefficient under different choices of controls. This can be a tedious task for the econometrician, particularly with a large set of controls. More importantly, it's difficult to concisely convey this information to the reader. Regression tables are useful for displaying a limited number of models, but they're less useful for demonstrating how coefficient estimates evolve under dozens or even hundreds of sets of controls. `starbility` provides a simple interface to create a "coefficient stability plot" (also known as a "specification curve") allowing both the econometrician and the reader to assess coefficient stability under different combinations of controls. 
 
