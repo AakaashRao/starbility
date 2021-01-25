@@ -162,7 +162,6 @@ create_felm_formulas = function(grid., perm., lhs., rhs., ...) {
   grid.$expr = gsub(' ', '', grid.$expr, fixed=T)
   grid.$expr = gsub('+|', '|', grid.$expr, fixed=T)
   grid.$expr = gsub('|+', '|', grid.$expr, fixed=T)
-  print(grid.)
   return(grid.)
 }
 
