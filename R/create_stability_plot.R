@@ -35,7 +35,7 @@
 create_grid = function(perm, lhs, rhs, ...) {
   l = list(...)
   if (is.null(l$base)) base = c()
-  if (is.null(l$perm_fe)) perm_fe = c(1)
+  if (is.null(l$perm_fe)) perm_fe = c()
   if (is.null(l$nonperm_fe)) nonperm_fe = c()
   l$temp = ''
   if (length(l)>0) {
@@ -44,22 +44,22 @@ create_grid = function(perm, lhs, rhs, ...) {
     }
   }
   if (is.null(l$fe_always) | length(nonperm_fe)==0) fe_always = F
-
+  
   # Begin by creating grid of perm
   grid = expand.grid(rep(list(c(0,1)), length(perm)+length(perm_fe)))
   names(grid) = c(names(perm), names(perm_fe))
-
+  
   # Add in base arguments
   base_matrix=data.frame(matrix(1L, nrow = nrow(grid), ncol = length(base)))
   names(base_matrix) = names(base)
   grid = cbind(base_matrix, grid)
-
+  
   # Now we add in the FEs
   if (!fe_always) {
     nonperm_fe = c(c('None'=''), nonperm_fe)
   }
   copies = length(nonperm_fe)
-
+  
   fes = rep(nonperm_fe, each=nrow(grid))
   grid = do.call("rbind", replicate(copies, grid, simplify = FALSE))
   grid$np_fe = fes
@@ -110,24 +110,24 @@ create_felm_formulas = function(grid., perm., lhs., rhs., ...) {
   if (is.null(l$perm_fe)) perm_fe = c()
   if (is.null(l$nonperm_fe)) nonperm_fe = c()
   if (is.null(l$cluster)) cluster = '0'
-
+  
   if (length(l)>0) {
     for(i in 1:length(l)) {
       assign(x = names(l)[i], value = l[[i]])
     }
   }
-
+  
   if (is.null(l$fe_always) | length(nonperm_fe)==0) fe_always=F
-
+  
   if (is.null(l$iv)) {
     iv='0'
   } else {
     iv=paste0('(', rhs., '~', l$iv, ')')
   }
-
+  
   # Combined dictionary
   base_perm = c(base, perm.)
-
+  
   if (!fe_always) {
     nonperm_fe = c(c('None'=''), nonperm_fe)
   }
@@ -137,14 +137,14 @@ create_felm_formulas = function(grid., perm., lhs., rhs., ...) {
   } else {
     grid.$expr2 = ''
   }
-
+  
   grid.$expr2 = ifelse((grid.$expr2=='' & grid.$np_fe==''), '0', grid.$expr2)
   grid.$expr2 = ifelse((grid.$expr2!='0' & grid.$np_fe!=''), paste0(grid.$expr2, '+'), grid.$expr2)
   grid. = grid. %>% dplyr::mutate(expr = paste(expr, '|', expr2, np_fe, '|', iv, '|', cluster, sep=''))
   grid. = grid.[,c(names(base_perm), names(perm_fe), 'np_fe', 'expr')]
   grid.$np_fe[grid.$np_fe==''] = '0'
   grid.$np_fe = factor(grid.$np_fe, levels=unique(grid.$np_fe))
-
+  
   # If IV is not zero, the RHS should appear in the second part of the formula:
   if (iv=='0') {
     indices_to_append = which(substring(grid.$expr, 1, 1)!='|')
@@ -154,14 +154,15 @@ create_felm_formulas = function(grid., perm., lhs., rhs., ...) {
     # However, if the second part of the formula is blank, we need to
     # add a 0.
     indices_to_append = which(substring(grid.$expr, 1, 1)=='|')
-    grid.$expr[indices_to_append] = paste0('0', grid.$expr[indices_to_append])
+    grid.$expr[indices_to_append] = paste0('1', grid.$expr[indices_to_append])
     grid.$expr = paste(lhs., '~', grid.$expr, sep='')
   }
-
+  
   # Sanitize formulas
   grid.$expr = gsub(' ', '', grid.$expr, fixed=T)
   grid.$expr = gsub('+|', '|', grid.$expr, fixed=T)
   grid.$expr = gsub('|+', '|', grid.$expr, fixed=T)
+  print(grid.)
   return(grid.)
 }
 
@@ -191,40 +192,40 @@ create_felm_formulas = function(grid., perm., lhs., rhs., ...) {
 #' @export
 create_model_estimates = function(grid., data., lhs., rhs., perm., ...) {
   l = list(...)
-
+  
   if (is.null(l$model)) { # Defaults to felm
     mod = function(x) starb_felm(spec=x, data=data., rhs=rhs.)
   } else if (is.character(l$model)) { # Add pre-defined models here
-      mod = case_when(
-        l$model == 'felm' ~ function(x) starb_felm(spec=x, data=data., rhs=rhs.)
-        # Add new models here
-      )
+    mod = case_when(
+      l$model == 'felm' ~ function(x) starb_felm(spec=x, data=data., rhs=rhs.)
+      # Add new models here
+    )
   } else if (is.function(l$model)) { # Custom model
     input_mod = l$model
     mod = function(x) input_mod(spec=x, data=data., rhs=rhs., ...)
   }
-
+  
   if (requireNamespace("furrr", quietly=TRUE) & requireNamespace("future", quietly=TRUE)) {
     future::plan(future::multiprocess)
     mapper = furrr::future_map
   } else {
     mapper = purrr::map
   }
-
+  
   grid = grid. %>%
-      mutate(model = mapper(expr, mod),
-             coef = purrr::map_dbl(model, 1),
-             p = purrr::map_dbl(model, 2),
-             error_high = purrr::map_dbl(model, 3),
-             error_low = purrr::map_dbl(model, 4),
-             r2 = purrr::map_dbl(model, 5)) %>%
+    mutate(model = mapper(expr, mod),
+           coef = purrr::map_dbl(model, 1),
+           p = purrr::map_dbl(model, 2),
+           error_high = purrr::map_dbl(model, 3),
+           error_low = purrr::map_dbl(model, 4),
+           r2 = purrr::map_dbl(model, 5)) %>%
     dplyr::select(-model) %>%
     mutate(p = case_when(
-             p<0.01 ~ 'p<0.01',
-             0.01<=p & p<0.05 ~ 'p<0.05',
-             0.05<=p & p<0.1 ~ 'p<0.10',
-             p>0.1 ~ 'p>0.10'
-           ))
+      p<0.01 ~ 'p<0.01',
+      0.01<=p & p<0.05 ~ 'p<0.05',
+      0.05<=p & p<0.1 ~ 'p<0.10',
+      p>0.1 ~ 'p>0.10'
+    ))
   return(grid)
 }
 
@@ -265,18 +266,18 @@ create_model_estimates = function(grid., data., lhs., rhs., perm., ...) {
 #' @export
 create_plot_dfs = function(grid, perm., ...) {
   l = list(...)
-
+  
   if (is.null(l$base)) base = c()
   if (is.null(l$perm_fe)) perm_fe = c()
   if (is.null(l$nonperm_fe)) nonperm_fe = c()
   if (is.null(l$sort)) sort = 'none'
-
+  
   if (length(l)>0) {
     for(i in 1:length(l)) {
       assign(x = names(l)[i], value = l[[i]])
     }
   }
-
+  
   # Sort
   if (sort == 'none') {
     coef_grid = grid. %>% mutate(model=row_number())
@@ -291,7 +292,7 @@ create_plot_dfs = function(grid, perm., ...) {
   } else {
     stop('Invalid argument to sort.')
   }
-
+  
   # Expand non-permuted FEs to multiple columns
   if (length(nonperm_fe)>0) {
     if (length(unique(coef_grid$np_fe))>1) {
@@ -303,15 +304,15 @@ create_plot_dfs = function(grid, perm., ...) {
     names(fe_df) = names(nonperm_fe)
     coef_grid = coef_grid %>% dplyr::bind_cols(fe_df)
   }
-
+  
   control_grid = coef_grid %>%
     dplyr::select(one_of(names(base), names(perm.), names(perm_fe), names(nonperm_fe)), -np_fe, model) %>%
     tidyr::gather(key, value, -model) %>%
     dplyr::mutate(value = factor(value, levels=c(0, 1)),
                   y = -as.numeric(factor(key, levels = unique(key))))
-
+  
   return (list(coef_grid, control_grid))
-
+  
 }
 
 #' Draw coefficient stability plots.
@@ -384,13 +385,13 @@ draw_panels = function(coef_grid., control_grid., ...) {
   }
   min_space = control_spacing/2
   nmodels = max(coef_grid.$model)
-
+  
   coef_plot = ggplot2::ggplot(coef_grid., aes(x = model, y = coef)) +
     geom_point(size=point_size, alpha=0.7, aes(col=p)) +
     guides(col=F) +
     ylab(coef_ylabel) +
     scale_color_manual(breaks = c('p<0.01','p<0.05','p<0.10','p>0.10'),
-      values=c('#F8766D', '#7CAE00', '#00BFC4', '#000000')) +
+                       values=c('#F8766D', '#7CAE00', '#00BFC4', '#000000')) +
     theme_bw() +
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
@@ -400,19 +401,19 @@ draw_panels = function(coef_grid., control_grid., ...) {
           panel.grid.minor.x = element_blank(),
           panel.border = element_blank(),
           text = element_text(family=font))
-
+  
   if (error_geom == 'ribbon') {
     coef_plot = coef_plot + geom_ribbon(aes(ymin=error_low, ymax=error_high), alpha=error_alpha)
   } else if (error_geom == 'errorbar') {
     coef_plot = coef_plot + geom_errorbar(aes(ymin=error_low, ymax=error_high), alpha=error_alpha)
   }
-
+  
   if (!is.null(l$coef_ylim)) {
     coef_plot = coef_plot + coord_cartesian(ylim=coef_ylim, xlim=c(1-min_space, nmodels+min_space))
   } else {
     coef_plot = coef_plot + coord_cartesian(xlim=c(1-min_space, nmodels+min_space))
   }
-
+  
   control_plot = ggplot(control_grid.) +
     scale_fill_manual(values=c('#FFFFFF', '#000000')) +
     guides(fill=F) +
@@ -429,7 +430,7 @@ draw_panels = function(coef_grid., control_grid., ...) {
     scale_y_continuous(breaks = unique(control_grid.$y), labels = unique(control_grid.$key),
                        limits=c(min(control_grid.$y)-1, max(control_grid.$y)+1)) +
     coord_cartesian(xlim=c(1-min_space, nmodels+min_space))
-
+  
   if (control_geom == 'rect') {
     control_plot = control_plot +
       geom_rect(aes(xmin = model-min_space,
@@ -441,9 +442,9 @@ draw_panels = function(coef_grid., control_grid., ...) {
     control_plot = control_plot +
       ggforce::geom_circle(aes(x0 = model, y0 = y, fill = value, r=control_spacing/2), alpha=0.8)
   }
-
+  
   return (list(coef_plot, control_plot))
-
+  
 }
 
 #' Combine coefficient panel and control panel to create a stability plot.
@@ -569,37 +570,37 @@ stability_plot = function(data, lhs, rhs, perm, ...) {
   if (!is.null(l[['control_grid']])) control_grid = l[['control_grid']]
   if (!is.null(l[['coef_panel']])) coef_panel = l[['coef_panel']]
   if (!is.null(l[['control_panel']])) control_panel = l[['control_panel']]
-
+  
   # Convert RHS in case is factor
   if (!is.numeric(data[[rhs]])) {
     data[[rhs]] = as.numeric(data[[rhs]])
   }
-
+  
   # Add equal weights if none exist
   if (is.null(l$weights)) {
     data$weight = 1
   } else {
     data$weight = data[[l$weights]]
   }
-
+  
   if (run_from<2) {
     # Step 1: create control grid
     grid = create_grid(perm, lhs, rhs, ...)
     if (run_to==2) return (grid)
   }
-
+  
   if (run_from<3) {
     # Step 2: add formulas to grid
     grid = create_felm_formulas(grid.=grid, perm.=perm, lhs.=lhs, rhs.=rhs, ...)
     if (run_to==3) return (grid)
   }
-
+  
   if (run_from<4) {
     # Step 3: estimate models
     grid = create_model_estimates(grid.=grid, data. = data, lhs. = lhs, rhs. = rhs, perm. = perm, ...)
     if (run_to==4) return (grid)
   }
-
+  
   if (run_from<5) {
     # Step 4: create plot dataframes
     dfs = create_plot_dfs(grid.=grid, perm.=perm, ...)
@@ -607,7 +608,7 @@ stability_plot = function(data, lhs, rhs, perm, ...) {
     coef_grid = dfs[[1]]
     control_grid = dfs[[2]]
   }
-
+  
   if (run_from<6) {
     # Step 5: draw the panels
     panels = draw_panels(coef_grid.=coef_grid, control_grid.=control_grid, ...)
@@ -615,18 +616,18 @@ stability_plot = function(data, lhs, rhs, perm, ...) {
     coef_panel = panels[[1]]
     control_panel = panels[[2]]
   }
-
+  
   if (run_from<7) {
     # Step 6: combine the panels
     return(combine_plots(coef_panel, control_panel, rel_height))
   }
-
+  
 }
 
 draw_oster = function(coef_grid., ...) {
   l = list(...)
   font = ifelse(is.null(l$font),'Arial', l$font)
-
+  
   print(nrow(coef_grid.))
   plot = ggplot(coef_grid., aes(x = r2, y = coef, col = p)) +
     geom_point(alpha=0.7) +
@@ -637,32 +638,32 @@ draw_oster = function(coef_grid., ...) {
     theme_bw() +
     theme(legend.position='none',
           text = element_text(family=font))
-
+  
   return(plot)
-
+  
 }
 
 #' @export
 oster_plot = function(data, lhs, rhs, perm, ...) {
   l = list(...)
-
+  
   run_to = ifelse(is.null(l$run_to), '', l$run_to)
   run_from = ifelse(is.null(l$run_from), 0, l$run_from)
-
+  
   if (!is.null(l[['grid']])) grid = l[['grid']]
   if (!is.null(l[['coef_grid']])) coef_grid = l[['coef_grid']]
   if (!is.null(l[['control_grid']])) control_grid = l[['control_grid']]
   if (!is.null(l[['coef_panel']])) coef_panel = l[['coef_panel']]
   if (!is.null(l[['control_panel']])) control_panel = l[['control_panel']]
-
-
+  
+  
   # Add equal weights if none exist
   if (is.null(l$weights)) {
     data$weight = 1
   } else {
     data$weight = data[[l$weights]]
   }
-
+  
   if (run_from<2) {
     # Convert RHS in case is factor
     if (!is.numeric(data[[rhs]])) {
@@ -672,19 +673,19 @@ oster_plot = function(data, lhs, rhs, perm, ...) {
     grid = create_grid(perm, lhs, rhs, ...)
     if (run_to==2) return (grid)
   }
-
+  
   if (run_from<3) {
     # Step 2: add formulas to grid
     grid = create_felm_formulas(grid.=grid, perm.=perm, lhs.=lhs, rhs.=rhs, ...)
     if (run_to==3) return (grid)
   }
-
+  
   if (run_from<4) {
     # Step 3: estimate models
     grid = create_model_estimates(grid.=grid, data. = data, lhs. = lhs, rhs. = rhs, perm. = perm, ...)
     if (run_to==4) return (grid)
   }
-
+  
   if (run_from<5) {
     # Step 4: create plot dataframes
     dfs = create_plot_dfs(grid.=grid, perm.=perm, ...)
@@ -692,12 +693,11 @@ oster_plot = function(data, lhs, rhs, perm, ...) {
     coef_grid = dfs[[1]]
     control_grid = dfs[[2]]
   }
-
+  
   if (run_from<6) {
     # Step 5: draw plot
     plot = draw_oster(coef_grid.=coef_grid, ...)
     return (plot)
   }
-
+  
 }
-
