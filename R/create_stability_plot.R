@@ -35,7 +35,7 @@
 create_grid = function(perm, lhs, rhs, ...) {
   l = list(...)
   if (is.null(l$base)) base = c()
-  if (is.null(l$perm_fe)) perm_fe = c()
+  if (is.null(l$perm_fe)) perm_fe = c(1)
   if (is.null(l$nonperm_fe)) nonperm_fe = c()
   l$temp = ''
   if (length(l)>0) {
