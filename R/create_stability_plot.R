@@ -204,8 +204,13 @@ create_model_estimates = function(grid., data., lhs., rhs., perm., ...) {
     mod = function(x) input_mod(spec=x, data=data., rhs=rhs., ...)
   }
   
+  if (is.null(l$cores)) {
+    l$cores = 1
+  }
+  
   if (requireNamespace("furrr", quietly=TRUE) & requireNamespace("future", quietly=TRUE)) {
-    future::plan(future::multiprocess)
+    future::plan(future::multisession, workers = l$cores)
+
     mapper = furrr::future_map
   } else {
     mapper = purrr::map
